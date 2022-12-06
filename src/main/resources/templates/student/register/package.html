@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/student_layout}">
+<!-- CSS only -->
+<head>
+<meta charset="UTF-8">
+<title>수강 꾸러미</title>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<style>
+	/* 카드 */
+	.card{
+		background-color:white;
+	}
+	/* 학생정보 테이블 */
+	#sInfo{
+		text-align: center;
+		margin: auto;
+		color: black;
+	}
+	#sInfo thead{
+		background-color: #435ebe;
+		color: white;
+	}
+	#sInfo tbody{
+		background-color: white;
+	}
+	/* 스크롤 테이블 헤더 고정 */
+	#pTable {
+		margin: auto;
+		text-align: center;
+		color: black;
+	}
+	#pTable thead {
+		position: sticky; 
+		top: 0px;
+		background-color: #435ebe !important;
+		color: white;
+	}
+	#pTable tbody tr {
+		background-color: white;
+	}
+
+	#frmchoice {
+		margin-bottom: 10px;
+	}
+
+	#searchBtn {
+		margin-left: 10px;
+	}
+	/* 신청학점 위치 조정 및 글자크기 */
+	#totalCredit {
+		padding-left: 30px;
+		font-size: large;
+		color: black;
+	}
+	/* 꾸러미LIST */
+	#inTable{
+		text-align: center;
+		margin: auto;
+		color: black;
+	}
+	#inTable thead{
+		background-color: #435ebe;
+		color: white;
+	}
+	#inTable tbody{
+		background-color: white;
+	}
+</style>
+</head>
+<body>
+	<th:block layout:fragment="studentContent">
+		<div id="main" class="page-title">
+			<h2>수강 꾸러미 신청</h2>
+			<hr>
+			<!-- 학생 정보 -->
+			<div class="card">
+				<div class="card-body">
+				<table class="table table-bordered" id="sInfo">
+					<thead>
+						<tr>
+							<th>학 번</th>
+							<th>성 명</th>
+							<th>학 년</th>
+							<th>대 학</th>
+							<th>전 공</th>
+							<th>신청 가능학점</th>
+							<th>교양 신청 가능학점</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="item:${studentInfo}">
+							<td th:text="${item.studentId}"></td>
+							<td th:text="${item.studentName}"></td>
+							<td th:text="${item.studentGrade}"></td>
+							<td th:text="${item.collegeName}"></td>
+							<td th:text="${item.departName}"></td>
+							<td>20</td>
+							<td>5</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<hr>
+			<h3>개설강의 LIST</h3>
+			<!-- 학과별 강의 검색 -->
+			<div class="card">
+				<div class="card-body">
+			<form name="frmchoice" id="frmchoice">
+				<select id="departCode" name="departCode">
+						<option value="">전체 강의</option>
+					<option selected>--- 학과선택 ---</option>
+					<optgroup label="인문대학">
+						<option value="JAPA">일어일문학과</option>
+						<option value="ENGL">영어영문학과</option>
+					</optgroup>
+					<optgroup label="사회과학대학">
+						<option value="PSYC">심리학과</option>
+					</optgroup>
+					<optgroup label="자연과학대학">
+						<option value="BIOL">생물학과</option>
+						<option value="CHEM">화학공학과</option>
+						<option value="PHYS">물리학과</option>
+					</optgroup>
+					<optgroup label="소프트웨어대학">
+						<option value="ELEG">전기공학과</option>
+					</optgroup>
+				</select>
+				<button class="btn rounded-pill btn-primary" type="submit" id="searchBtn">검색</button>
+			</form>
+
+			<!-- 강의 목록 -->
+			<div class="overflow-auto" style="max-height: 300px;">
+				<table class="table table-bordered table-hover" id="pTable">
+					<thead>
+						<tr>
+							<th>강의 코드</th>
+							<th>이수 구분</th>
+							<th>강의 명</th>
+							<th>학 점</th>
+							<th>담당 교수</th>
+							<th>수강 정원</th>
+							<th>담 기</th>
+						</tr>
+					</thead>
+					<tbody id="pBody">
+						<tr th:each="item:${coursePackage}">
+							<td th:text="${item.courseCode}"></td>
+							<td th:text="${item.courseSortation}"></td>
+							<td th:text="${item.courseName}"></td>
+							<td th:text="${item.courseCredit}"></td>
+							<td th:text="${item.professorName}"></td>
+							<td th:text="${item.courseLimit}"></td>
+							<td><button type="button"
+									class="buttonInsert btn rounded-pill btn-primary"
+									th:data-code="${item.courseCode}" th:data-name="${item.courseName}">담 기</button></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+			</div>
+		</div>
+		<hr>
+		<!-- 담은 강의 목록 -->
+		<h3>수강꾸러미 LIST</h3>
+			<div class="card">
+				<div class="card-body">
+			<div class="overflow-auto" style="max-height: 300px;">
+				<table class="table table-bordered table-hover" id="inTable">
+					<thead>
+						<tr>
+							<th>강의 코드</th>
+							<th>이수 구분</th>
+							<th>강의 명</th>
+							<th>학 점</th>
+							<th>담당 교수</th>
+							<th hidden>수강 정원</th>
+							<th>취 소</th>
+						</tr>
+					</thead>
+					<tbody id="psBody">
+						<tr th:each="item:${coursePackageList}">
+							<td th:text="${item.courseCode}"></td>
+							<td th:text="${item.courseSortation}"></td>
+							<td th:text="${item.courseName}"></td>
+							<td th:text="${item.courseCredit}"></td>
+							<td th:text="${item.professorName}"></td>
+							<td th:text="${item.courseLimit}" hidden></td>
+							<td><button type="button"
+									class="buttonDelete btn rounded-pill btn-primary"
+									th:data-code="${item.courseCode}">취 소</button></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>	
+		</div>
+		<div id="totalCredit">
+		<p>
+			수강꾸러미 신청가능 학점: <span id="total" th:text="!${coursePackagePoint}?20:20-${coursePackagePoint.packageCredit}"></span>
+		</p>
+		<p>교양과목 신청 최대학점: 5</p>
+		</div>
+	</div>
+		</div>
+		<script th:inline="javascript">
+			
+			// 총 학점 체크
+			function packageCreditTotalSum(){
+				let creditCount = 0;
+
+				Array.from(psBody.children).forEach(function(item) {
+						creditCount += parseInt(item.children[3].textContent);
+				});
+				return creditCount;
+			}
+			
+			// 전체 학점에서 신청하는 학점 빼기
+			function setPackageTotalData() {
+				const creditCount = packageCreditTotalSum();
+				document.getElementById("total").innerHTML = (20 - creditCount);
+			}
+			
+			// 교양과목 체크
+			function lSortationCheck() {
+				let creditCount = 0;
+				Array.from(psBody.children).forEach(function(item) {
+						if((item.children[1].textContent).startsWith('L','l') ){
+							creditCount += parseInt(item.children[3].textContent);
+						}
+				});
+				return creditCount;
+			}
+
+			// 담기 버튼 클릭
+			$(function(){
+				$(".buttonInsert").on("click", coursePackageInsert)
+			})
+
+			//
+			function coursePackageInsert(oThis) {
+				let that = oThis instanceof jQuery.Event ? $(this) : oThis;
+				let code = oThis instanceof jQuery.Event ? that.data("code") : that.getAttribute("th:data-code");
+				let name = oThis instanceof jQuery.Event ? that.data("name") : that.getAttribute("th:data-name");
+				let allCourseCredit = packageCreditTotalSum();
+				const selectCode = $(that)[0].parentElement.parentElement;
+				const selectNum = parseInt(selectCode.children[3].textContent);
+			
+			// 담은 학점 계산
+			if( (allCourseCredit + selectNum) > 20 ){
+				return fireSwal('warning','최대 학점을 초과할수없습니다.');
+			}
+
+			if((selectCode.children[1].textContent).startsWith("L","l")) {
+				let lSortationTotal = lSortationCheck();
+				if( (lSortationTotal + parseInt(selectCode.children[3].textContent)) > 5 ){
+					return fireSwal('warning','교양학점은 5점을 초과할 수 없습니다.');
+						}
+					}
+				
+					$.ajax({
+						url:"/student/coursePackageInsert",
+						method:"post",
+						dataType:"json",
+						data:{
+							"courseCode" : code,
+							"courseName" : name
+						},
+						dataType:"json",			
+						success:function(item){
+							let content=`<tr>
+								<td>${item.courseCode}</td>
+								<td>${item.courseSortation}</td>
+								<td>${item.courseName}</td>
+								<td>${item.courseCredit}</td>
+								<td>${item.professorName}</td>
+								<td hidden>${item.courseLimit}</td>
+								<td><button type="button" class="buttonDelete btn rounded-pill btn-primary" data-code="${item.courseCode}">취소</button></td></tr>`;
+								$("#psBody").append(content);
+								var pTable = document.getElementById("pTable");
+								var removeBtn = Array.from(pTable.children[1].children);
+								removeBtn.forEach(function(courseRemove) {
+									if(courseRemove.children[0].textContent === item.courseCode) {
+										courseRemove.remove();
+									}
+								});
+								setPackageTotalData();
+							},
+							error:function() {
+								fireSwal('warning', '이전에 수강하신 강의입니다.');
+							}
+						});
+				}
+					// 취소 버튼
+			$(function() {
+				$("#psBody").on("click",".buttonDelete",coursePackageDelete)
+				function coursePackageDelete(){
+					let code = $(this).data("code")
+					let tr = $(this).closest("tr");
+					let cancelCourse = this.parentElement.parentElement;
+						$.ajax({
+							url:"/student/coursePackageDelete",
+							method:"post",
+							dataType:"json",
+							data:{
+								"courseCode" : code,
+								"courseName" : name
+							},
+							dataType:"json",
+							success:function(item){
+								let cancel = "<tr><td>" + cancelCourse.children[0].textContent + "</td>"
+								+ "<td>" + cancelCourse.children[1].textContent + "</td>"
+								+ "<td>" + cancelCourse.children[2].textContent + "</td>"
+								+ "<td>" + cancelCourse.children[3].textContent + "</td>"
+								+ "<td>" + cancelCourse.children[4].textContent + "</td>"
+								+ "<td>" + cancelCourse.children[5].textContent + "</td>"
+								+ "<td><button type='button' class='buttonInsert btn rounded-pill btn-primary'	th:data-code= " + cancelCourse.children[0].textContent + " th:data-name= " + cancelCourse.children[2].textContent + " onclick='coursePackageInsert(this)' >담 기</button></td></tr>"
+								$("#pBody").append(cancel);	
+								tr.remove();
+								setPackageTotalData();
+							}
+						});
+				}
+			})
+		</script>
+	</th:block>
+</body>
+</html>

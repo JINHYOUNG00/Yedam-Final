@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+</head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<div id="noticeFragment">
+		<ul>
+			<li th:each="notice, idx : ${noticeList}">
+				<span class="div-label" th:text="${notice.noticeDivision}"></span>
+				<p>
+				<a th:href="|@{{uri}/detailNotice/{noticeNo}(uri = ${#strings.replace(#request.requestURI, '/getNotice', '')}, noticeNo = ${notice.noticeNo})}|">
+					<span th:text="${notice.noticeTitle}"></span>
+				</a>
+					<span class="date" th:text="${#dates.format(notice.noticePostDate, 'yyyy-MM-dd')}"></span>
+				</p>
+			</li>
+		</ul>
+	</div>
+</body>
+</html>

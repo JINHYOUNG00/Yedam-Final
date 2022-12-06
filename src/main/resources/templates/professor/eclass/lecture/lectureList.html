@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/professor-eclass_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<th:block layout:fragment="professorEclassContent">
+		<div id="main">
+		<div class="page-title">
+			<h3>강의 리스트</h3>
+		</div>
+		<div class="card height-sevenh">
+		<div class="card-header">
+			<button type="button" 
+					class="btn btn-danger rounded-pill right-f"
+					th:onclick="|location.href='@{/professor/eclass/insertLecture}'|">강의 등록</button>
+			</div>
+		<div th:if="${lectureList.isEmpty()}" class="card-body content-no height-four">
+			<h4>등록된 강의가 없습니다.</h4>
+		</div>
+		<div th:unless="${lectureList.isEmpty()}" class="card-body">
+			<table class="table table-hover">
+				<thead class="thead-primary">
+					<tr>
+						<th>강의 주차</th>
+						<th>강의 제목</th>
+						<th>강의 출석 기한</th>
+						<th class="width-one">인정 시간</th>
+						<th>강의 영상</th>
+					</tr>
+				</thead>
+				<tbody class="tbody-center">
+					<tr th:each="lec : ${lectureList}" th:onclick="|location.href='@{/professor/eclass/detailLecture/{lectureCode}(lectureCode = ${lec.lectureCode})}'|">
+						<td th:text="${#strings.substring(lec.weekCode, 8, 10)}"></td>
+						<td th:text="${lec.lectureTitle}"></td>
+						<td th:text="|${#dates.format(lec.lectureStartDate, 'yyyy-MM-dd')} ~ ${#dates.format(lec.lectureEndDate, 'yyyy-MM-dd')}|"></td>
+						<td th:text="|${lec.lectureAttTime/60}분|"></td>
+						<td th:if="${lec.videoCode != null}"><a th:href="@{/video/download/{videoCode}(videoCode=${lec.videoCode})}">[[${lec.lectureFile.videoName}]]</a></td>
+						<td th:unless="${lec.videoCode != null}"><a th:href="${lec.lectureYoutubePath}" target="_blank">유튜브</a></td> 
+					</tr>
+				</tbody>
+			</table>
+			<div th:object="${pageMaker}" th:with="cri = ${pageMaker.cri}">
+						<ul class="pagination justify-content-center">
+							<th:block th:if="${pageMaker.prev}">
+								<li class="page-item prev"><a class="page-link"
+									href="javascript:void(0)"
+									th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${cri.getLink(pageMaker.startPage - 1, cri.amount, cri.type, cri.keyword)}]])">이전</a>
+								</li>
+							</th:block>
+							<th:block th:with="pageMaker = ${pageMaker}">
+								<th:block
+									th:each="num : ${#numbers.sequence(pageMaker.startPage, pageMaker.endPage)}">
+									<li class="page-item"
+										th:classappend="${pageMaker.cri.pageNum == num} ? 'active' : ''">
+										<a class="page-link" href="javascript:void(0)"
+										th:text="${num}"
+										th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${cri.getLink(num, cri.amount, cri.type, cri.keyword)}]])"></a>
+									</li>
+								</th:block>
+								<th:block th:if="${pageMaker.next}">
+									<li class="page-item next"><a class="page-link"
+										href="javascript:void(0)"
+										th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${cri.getLink(pageMaker.endPage + 1, cri.amount, cri.type, cri.keyword)}]])">다음</a>
+									</li>
+								</th:block>
+							</th:block>
+						</ul>
+					</div>
+			</div>
+			</div>
+			</div>
+			<script th:inline="javascript">
+				$(function() {
+					stopFromMoving();
+				})
+			</script>
+	</th:block>
+</body>
+</html>

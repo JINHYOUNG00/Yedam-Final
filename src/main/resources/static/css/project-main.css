@@ -1,0 +1,811 @@
+#headNav {
+	height: 60px;
+	position: fixed;
+	top: 0;
+	z-index: 999;
+	width: 100%;
+	padding: 0% 3%;
+	box-shadow: 0px 5px 21px -5px #CDD1E1;
+}
+
+#headNav ul {
+	width: 18%;
+}
+
+#headNav li {
+	width: 50%;
+	margin: 2%;
+	padding: 0%;
+	border: 1px solid #435ebe;
+	border-radius: 10px;
+	text-align: center;
+}
+
+.omrCard span {
+	border-radius: 100%;
+	padding: 10% 25%;
+}
+
+.no-bottom {
+	margin-bottom: 0!important;
+}
+
+.marked {
+	background: #435ebe;
+	color: white;
+}
+
+.wrong-marked {
+	background: red;
+	color: white;
+}
+
+.left-f {
+	float: left;
+}
+
+.right-f {
+	float: right;
+}
+
+#headNav i, #headNav a {
+	font-weight: bold;
+	font-size: small;
+}
+
+#noticeFragment ul {
+	padding: 0;
+	list-style: none;
+}
+
+#noticeFragment li {
+	border-bottom: 1px solid #eee!important;
+	margin: 1%;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+#noticeFragment li:last-of-type {
+	border: none;
+}
+
+#noticeFragment .div-label {
+	display: block;
+	width: 20%;
+	background: #004c86;
+	color: white;
+	text-align: center;
+	margin-bottom: 0.5%;
+}
+
+#noticeFragment .date {
+	position: absolute;
+	right: 6%;
+}
+
+#noticeFragment a {
+	text-decoration: none;
+	color: #25396f;
+	position: relative;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	width: 70%;
+	float: left;
+}
+
+.table-hover {
+	cursor: pointer;
+}
+
+.thead-primary th {
+	background: #435ebe;
+	color: white;
+	text-align: center;
+}
+
+.tbody-center th, .tbody-center td {
+	text-align: center;
+}
+
+.originalFileBox {
+	border: 1px solid #ddd;
+	padding: 1%;
+	margin-bottom: 0;
+}
+
+.table-margin {
+	margin-top: 5%;
+}
+
+.no-content {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 50vh;
+}
+
+.content-no {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.left {
+	text-align: left;
+}
+
+.page-title {
+	margin-left: 1%;
+	margin-top: 4.5%;
+	margin-bottom: 1.5%;
+}
+
+.lecture-title {
+	height: 80px;
+	background: #435ebe;
+}
+
+.studentExamContainer {
+	padding: 3%;
+}
+
+.bold {
+	font-weight: bold;
+	font-size: large;
+}
+
+.omrCard {
+	padding: 3%;
+}
+
+.btnContainer {
+	text-align: center;
+	margin: 2%;
+}
+
+.lecture-card {
+	border: 1px solid #eee;
+	border-radius: 10px;
+	margin: 2%;
+}
+
+.learnInfo .learnBtn {
+	display: inline;
+}
+
+.learnBtn {
+	width: 15%;
+	line-height: 100%;
+}
+
+.goLearnBtn {
+	font-size: 1.25em;
+}
+
+.right {
+	margin-top: 3%;
+	text-align: right;
+}
+
+.right-align {
+	text-align: right;
+}
+
+.center {
+	text-align: center;
+}
+
+input[name="tabs"] {
+	display: none;
+}
+
+.tabmenu {
+	display: inline-block;
+	width: 15%;
+	height: 50px;
+	border-top-left-radius: 10px;
+	border-top-right-radius: 10px;
+	background: rgba();
+	font-size: small;
+	color: #435ebe;
+	font-weight: bold;
+	text-align: center;
+	line-height: 50px;
+}
+
+.tabmenu:hover {
+	background: #435ebe;
+	color: #fff;
+	cursor: pointer;
+}
+
+.active {
+	background: #435ebe;
+	color: #fff;
+}
+
+input[name="tabs"]+.tabmenu {
+	border-top: 1px solid #435ebe;
+	border-left: 1px solid #435ebe;
+	border-right: 1px solid #435ebe;
+	border-bottom: 1px solid #ffffff;
+}
+
+.col-md-4 {
+	text-align: left;
+	font-weight: bold;
+	color: #25396f;
+}
+
+.inputBox {
+	padding: 3% 10% 3% 10%;
+}
+
+.paging {
+	height: 700px;
+}
+
+.visibility-none {
+	visibility: hidden;
+}
+
+.no-height {
+	height: auto!important;
+}
+
+.addQuestionBtn {
+	margin: 4%;
+	height: 100px;
+}
+
+.prevBtn {
+	float: left;
+}
+
+.nextBtn {
+	float: right;
+}
+
+.prevBtn, .nextBtn {
+	margin-bottom: 8%;
+	width: 80px;
+}
+
+.prevBtn i, .nextBtn i {
+	font-size: x-large;
+}
+
+.hidePage {
+	display: none;
+}
+
+.lecture-box {
+	height: 95vh;
+}
+
+.no-content-box {
+	padding: 2%;
+	border: 1px solid #eee;
+	margin: 2%;
+	border-radius: 10px;
+}
+
+.main-row {
+	margin-top: 5%;
+}
+
+.horizontal-title {
+	display: inline-block;
+	padding-left: 1%;
+	height: 60px;
+	width: 100%;
+	background-color: #435ebe;
+	line-height: 60px;
+}
+
+.horizontal-title span {
+	margin: 0% 1% 0% 1%;
+}
+
+.lectureTitle {
+	padding: 3%!important;
+	border: 1px solid #ccc;
+	border-radius: 5px;
+	text-align: center;
+}
+
+.horizontal-title a {
+	font-weight: bold;
+	color: white;
+	text-decoration: none;
+}
+
+.offPage {
+	display: none;
+}
+
+.tooltip-inner {
+    background-color: #435ebe;
+    opacity: 1 !important;
+    padding: 5%;
+}
+.tooltip.bs-tooltip-right .tooltip-arrow::before {
+    border-right-color: #435ebe !important;
+}
+.tooltip.bs-tooltip-left .tooltip-arrow::before {
+    border-left-color: #435ebe !important;
+}
+.tooltip.bs-tooltip-bottom .tooltip-arrow::before {
+    border-bottom-color: #435ebe !important;
+}
+.tooltip.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: #435ebe !important;
+}
+
+.notecard {
+	height: 100px;
+	display: block;
+	overflow: hidden;
+	position: relative;
+	width: 90%;
+	text-overflow: ellipsis;
+	white-space: wrap;
+	border: 1px solid #eee;
+	border-radius: 10px;
+	padding: 2%;
+	float: left;
+}
+
+.notecard:hover {
+	cursor: pointer;
+}
+
+.notecard-visible {
+	overflow: visible;
+	height: auto;
+	width: 90%;
+}
+
+.board-content-box {
+	overflow: scroll;
+	height: 38vh;
+	margin-bottom: 2%;
+}
+
+.board-question-box {
+	overflow-y: scroll;
+	height: 80vh;
+	margin-bottom: 2%;
+}
+
+#emptyQuestion {
+	border: 1px solid #eee;
+	padding: 10%;
+	margin-right: 3%;
+}
+
+.tab-title {
+	margin: 4%;
+}
+
+.scroll {
+	overflow: scroll;
+	height: 600px;
+}
+
+.grid-item img {
+	height: 100%; 
+	width: 60%; 
+	float:right;
+}
+
+.grid-container {
+	display: grid;
+	grid-template-columns: auto auto;
+	padding: 1%;
+}
+
+.grid-container-two {
+	display: grid;
+	grid-template-columns: 60% 40%;
+	padding: 1%;
+}
+
+.grid-container-three {
+	display: grid;
+	grid-template-columns: 33.33% 33.33% 33.33%;
+	padding: 1%;
+}
+
+.grid-container-four {
+	display: grid;
+	grid-template-columns: auto auto auto auto;
+	padding: 1%;
+}
+
+.grid-container-five {
+	display: grid;
+	grid-template-columns: 20% 20% 20% 20% 20%;
+	padding: 1%;
+	min-height: 40vh;
+}
+
+.grid-item {
+	margin: 2%;
+}
+
+.grid-border {
+	border: 0.5px solid #aaa;
+	height: 140px;
+	padding: 3%;
+	border-radius: 5px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.grid-border p {
+	margin-bottom: 0.2rem !important;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.grid-border a {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.grid-border:hover {
+	transform: scale(1.05);
+	transition: 0.5s;
+	cursor: pointer;
+}
+
+.grid-border a:hover {
+	text-decoration: underline;
+}
+
+.grid-item .card {
+	cursor: pointer;
+}
+
+.gridImg {
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	border-radius: 15px;
+	background-color: white;
+	/* text-align: center; */
+	height: 150px;
+}
+
+.gridImg h3 {
+	margin-top: 10px;
+	margin-left: 10px;
+}
+
+.gridImg:hover {
+	transform: scale(1.05);
+	transition: 0.5s;
+	cursor: pointer;
+}
+
+.wall-paper {
+	background-image: url(/images/school_img.jpg);
+	background-position: center;
+	background-size: cover;
+}
+
+/* .grid-item .card:hover {
+	transform: scale(1.05);
+	transition-duration: 0.5s;
+} */
+.cardForm {
+	height: 95vh;
+}
+
+.min-seven {
+	min-height: 75vh;
+}
+
+.testContainer {
+	display: block;
+}
+
+input[name=examQuestionPoint] {
+	float: right;
+	width: 15%;
+}
+
+.ellipse {
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.questionBox {
+	margin-bottom: 0px !important;
+	padding: 1% !important;
+}
+
+.newQuestion {
+	margin-bottom: 0px !important;
+}
+
+.newQuestion .form-control {
+	padding: 0px !important;
+}
+
+.width-one {
+	width: 10%;
+}
+
+.width-two {
+	width: 20%;
+}
+
+.width-three {
+	width: 30%;
+}
+
+.width-four {
+	width: 40%;
+}
+
+.width-five {
+	width: 50%;
+}
+
+.width-six {
+	width: 60%;
+}
+
+.width-seven {
+	width: 70%;
+}
+
+.width-eight {
+	width: 80%;
+}
+
+.width-nine {
+	width: 90%;
+}
+
+.height-e {
+	height: 80%;
+}
+
+.formrow div {
+	margin-bottom: 1%;
+}
+
+.height-thirteen {
+	height: 130vh;
+}
+
+.height-elevenh {
+	height: 115vh;
+}
+
+.height-ten {
+	height: 100vh;
+}
+
+.height-nine {
+	height: 90vh;
+}
+
+.height-eight {
+	height: 80vh;
+}
+
+.height-seven {
+	height: 70vh;
+}
+
+.height-sevenh {
+	height: 75vh;
+}
+
+.height-six {
+	height: 60vh;
+}
+
+.height-sixh {
+	height: 65vh;
+}
+
+.height-five {
+	height: 50vh;
+}
+
+.height-four {
+	height: 40vh;
+}
+
+.height-three {
+	height: 30vh;
+}
+
+.height-one {
+	height: 10vh;
+}
+
+#bookmark {
+	position: fixed;
+	top: 10%;
+	left: 87%;
+	border-left: 3px solid #25396f;
+}
+
+#bookmark h6 {
+	font-weight: bold;
+	margin-bottom: 5%;
+}
+
+#bookmark a {
+	text-decoration: none;
+	color: #25396f;
+}
+
+.lectureNoteCard {
+	background: #f8f9fa;
+}
+
+#loginContainer, #passwordContainer {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+}
+
+#loginContainer .row {
+	width: 50%;
+	height: 600px;
+	border-radius: 20px;
+	/* background: white; */
+	background-color: #ffffff;
+  background-color: rgba( 255, 255, 255, 0.9);
+}
+
+#passwordContainer .row {
+	width: 70%;
+	height: 500px;
+	border-radius: 20px;
+	background: white;
+	padding: 5%;
+}
+
+#passwordContainer .form-header {
+	margin: 2%;
+	text-align: center;
+}
+
+.inline {
+	display: inline;
+}
+
+#loginContainer #loginHeading {
+	padding-top: 5%;
+}
+
+#loginHeading h2, #loginHeading i {
+	color: white;
+}
+
+#loginContainer #loginFrm {
+	width: 100%;
+	padding: 5% 10%;
+	height: 500px;
+	align-items: center;
+	color: #25396f;
+	font-weight: bold;
+}
+
+.mainImg {
+	width: 60%; 
+	height: 100px!important;
+}
+
+.mainImg:hover {
+	cursor: pointer;
+}
+
+.logo-size {
+	width: 100%; 
+	height: 100px; 
+	text-align: center;
+}
+
+#loginImg {
+	border-top-right-radius: 20px;
+	border-bottom-right-radius: 20px;
+}
+
+#loginImg img {
+	width: 100%;
+	height: 100%;
+}
+
+.mainCard:hover {
+	transform: scale(1.1);
+	transition: 1s;
+	cursor: pointer;
+}
+
+#goOutContainer {
+	float: right;
+	margin: 2%;
+}
+
+#goOut {
+	border: none;
+}
+
+.board-scroll {
+	overflow-y: scroll;
+	height: 60vh;
+	margin: 2%;
+}
+
+.lecture-scroll {
+	overflow-y: scroll;
+	height: 75vh;
+}
+
+.main-box {
+	height: 90px;
+	border-radius: 10px;
+}
+
+.main-box:hover {
+	transform: scale(1.05);
+	transition: 1s;
+	cursor: pointer;
+}
+
+.main-box h3 {
+	line-height: 90px;
+	margin-left: 3%;
+}
+
+.main-long-box h3 {
+	line-height: 50px;
+	margin-left: 5%;
+	text-align: center;
+}
+
+.main-long-box {
+	height: 80vh;
+	background: white;
+	border-radius: 10px;
+}
+
+#calendar {
+	width: 100%;
+	height: 52vh;
+	padding-left: 2%;
+	padding-right: 2%;
+}
+
+.padding-ten {
+	padding-left: 10%;
+	padding-right: 10%;
+	padding-top: 3%;
+	padding-bottom: 3%;
+}
+
+form[name=frm_year] {
+	text-align: center;
+}
+
+#fullCalendar {
+	height: 72vh;
+	width: 100%;
+	padding: 3%;
+}

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/professor-eclass_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+
+	<th:block layout:fragment="professorEclassContent">
+
+		<div id="main">
+			<div class="page-title">
+				<h3>공지사항 수정</h3>
+			</div>
+
+			<div class="card">
+				<div class="card-body">
+					<form name="noticeFrm" th:action="@{/professor/eclass/eclassnoticemodify}" method="POST"
+						enctype="multipart/form-data">
+						<table class="table table-bordered mb-0">
+							<tbody>
+								<tr>
+									<td class="text-bold-500"
+										style="background-color: rgba(0, 0, 0, 0.05);">제목</td>
+									<td colspan="3"><input class="form-control hidden"
+										name="courseNoticeTitle" id="titleeditor"
+										th:value="${selectProDetailStudyNotice.courseNoticeTitle}">
+										<input type="hidden" id="courseNoticeNo" name="courseNoticeNo" th:value="${selectProDetailStudyNotice.courseNoticeNo}">
+										<input type="hidden" id="courseNoticeAttachedFile" name="courseNoticeAttachedFile" th:value="${selectProDetailStudyNotice.courseNoticeAttachedFile}">
+									</td>
+
+								</tr>
+
+								<tr>
+									<td class="text-bold-500" width="15%"
+										style="background-color: rgba(0, 0, 0, 0.05);">조회수</td>
+									<td th:text="${selectProDetailStudyNotice.courseNoticeHit}"
+									width="35%"></td>
+									<td class="text-bold-500"
+										style="background-color: rgba(0, 0, 0, 0.05);"
+										width="15%">등록일</td>
+									<td width="35%"
+										th:text="${#dates.format(selectProDetailStudyNotice.courseNoticeRegDate, 'yyyy-MM-dd')}"></td>
+								</tr>
+
+								<tr>
+									<td class="text-bold-500"
+										style="background-color: rgba(0, 0, 0, 0.05);">첨부파일</td>
+									<td colspan="3">
+			<th:block th:each="selectFile : ${selectFile}">
+			<a style="display:block;" th:href="@{/courseNotice/download/{fileName}(fileName=${selectFile.fileName})}"
+			th:text="${selectFile.fileOriName}"></a>
+			</th:block>
+			</td>
+								</tr>
+								<tr>
+									<td class="text-bold-500"
+										style="background-color: rgba(0, 0, 0, 0.05);">수정첨부파일</td>
+									<td colspan="3"> 
+									<input type="file" class="file-control" name="file" multiple>
+									</td>
+								<tr>
+									
+								</tr>
+
+
+								<tr>
+									<td class="text-bold-500"
+										style="background-color: rgba(0, 0, 0, 0.05);">내용</td>
+									<td colspan="3">
+										<textarea class="form-control hidden"
+											name="courseNoticeContent" id="contenteditor"
+											th:text="${selectProDetailStudyNotice.courseNoticeContent}">
+			  					  </textarea></td>
+
+
+
+								</tr>
+							</tbody>
+						</table>
+						<br>
+						<button type="submit" class="saveBtn btn btn-primary me-1 mb-1">수정하기</button>
+						<button type="button" class="saveBtn btn btn-primary me-1 mb-1 List noticeDetail">취소</button>
+					</form>
+					
+
+
+				</div>
+
+			</div>
+		</div>
+		
+		
+		<script th:inline="javascript">
+			// 텍스트 에디터
+			$(function() {
+				editor();
+			})
+	
+			function editor() {
+				tinymce.init({
+					selector : '#contenteditor',
+					plugins : ['image', 'table'],
+					submit_patch : false,
+					setup : function(editor) {
+						editor.on('change', function() {
+							editor.save();
+						})
+					}
+				})
+			}
+		
+		
+			// 취소 버튼 (과제 리스트페이지로 이동)
+			$('.noticeDetail').on("click", function() {
+				let courseNoticeNo = $('#courseNoticeNo').val()
+				location.href = "/professor/eclass/eclassnotice/" + courseNoticeNo
+
+			})
+		</script>
+	</th:block>
+
+</body>
+</html>

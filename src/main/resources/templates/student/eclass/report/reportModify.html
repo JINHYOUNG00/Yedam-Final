@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/student-eclass_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<th:block layout:fragment="studentEclassContent">
+		<div id="main">
+			<div class="page-title">
+				<h2>과제 수정</h2>
+				</div>
+				
+				<div class="card card height-nineh">
+					<div class="card-body">
+						<form th:action="@{/student/eclass/reportModify}" method="POST"
+							enctype="multipart/form-data">
+							<input type="hidden" name="reportCode"
+								th:value="${reportDetail.reportCode}">
+									<input type="hidden" name="reportSubFileCode"
+								th:value="${reportDetail.reportSubFileCode}">
+							
+							<table class="table table-bordered mb-0">
+								<tr>
+									<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);" width="15%">과제 제목</td>
+									<td th:text="${reportDetail.reportTitle}"></td>
+								</tr>
+
+								<tr>
+									<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">과제 주차</td>
+									<td th:text="${reportDetail.weekNum}"></td>
+								</tr>
+
+								<tr>
+									<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">과제 시작일</td>
+									<td
+										th:text="${#dates.format(reportDetail.reportStartDate, 'yyyy-MM-dd')}"></td>
+								</tr>
+
+								<tr>
+									<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">과제 마감일</td>
+									<td
+										th:text="${#dates.format(reportDetail.reportEndDate, 'yyyy-MM-dd')}"></td>
+								</tr>
+
+								<tr>
+									<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">과제 내용</td>
+									<td th:utext="${reportDetail.reportContent}"></td>
+								</tr>
+								
+								<tr>
+									<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">과제 첨부파일</td>
+									<td><a
+									th:href="@{/report/download/{reportFileCode}/{userCode}(reportFileCode=${profFile.reportFileCode}, userCode=${profFile.userCode})}"
+									th:text="${profFile.reportFileName}"></a></td>
+								</tr>
+
+								<tr>
+									<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">제출한 첨부파일</td>
+									<td><a
+									th:href="@{/report/download/{reportFileCode}/{userCode}(reportFileCode=${reportDetail.reportFileCode}, userCode=${reportDetail.userCode})}"
+									th:text="${reportDetail.reportFileName}"></a></td>
+								</tr>
+
+								<tr>
+									<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">첨부파일</td>
+
+									<td><input type="file" name="file"></td>
+								</tr>
+
+							</table>
+							<br>
+							<div style=" text-align: center;">
+
+							
+							<button type="submit"class="saveBtn btn btn-primary me-1 mb-1 modifyReport">수정하기</button>
+							<button type="button"
+								class="saveBtn btn btn-primary me-1 mb-1 submitClose">취소</button>
+							</div>
+						</form>
+
+					</div>
+
+				</div>
+			</div>
+
+		<script th:inline="javascript">
+			// 취소 버튼 (과제 리스트페이지로 이동)
+			$('.submitClose').on("click", function() {
+				let reportCode = ($(this).data("reportcode"));
+				console.log(reportCode)
+				location.href = "/student/eclass/reportList/"
+
+			})
+
+
+			// courseCode 값 전송
+			$('#courseCode').val()
+		</script>
+	</th:block>
+</body>
+</html>

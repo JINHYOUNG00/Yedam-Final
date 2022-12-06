@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.project.portal.studynotice.service.StudyNoticeMapper">
+	
+	<select id="getTotal" resultType="integer">
+		SELECT count(*) AS notice_count
+		  FROM COURSE_NOTICE
+		 WHERE COURSE_CODE = #{courseCode}
+		 <if test="keyword != null and keyword !=''">
+							AND ${type} like '%'|| #{keyword} || '%'
+		</if>
+	
+	</select>
+	
+	<select id="selectStudyNoticeList" resultType="com.project.portal.studynotice.service.StudyNoticeVO">
+
+		
+		   select *
+     from (
+        SELECT a.*, ROWNUM notice_no
+		  FROM (SELECT 
+                       course_notice_no,
+                       course_code,
+                       course_notice_title,
+                       course_notice_content,
+                       course_notice_reg_date,
+                       course_notice_update_date,
+                       course_notice_attached_file,
+                       course_notice_hit
+                       FROM course_notice
+                       WHERE COURSE_CODE = #{notice.courseCode}
+                        <if test="notice.keyword != null and notice.keyword !=''">
+							AND ${notice.type} like '%'|| #{notice.keyword} || '%'
+						</if>	
+                       ORDER BY TO_NUMBER(COURSE_NOTICE_NO) DESC
+                        ) a
+              
+                  )
+                   <where>
+						<if test="cri != null and cri != ''">
+							<if test="cri.pageNum != null and cri.pageNum != 0">
+								AND notice_no BETWEEN (#{cri.pageNum} - 1) * #{cri.amount} AND #{cri.pageNum} * #{cri.amount}
+							</if>
+						</if>
+						</where>
+			
+	</select>
+	
+	<select id="selectDetailStudyNotice" resultType="com.project.portal.studynotice.service.StudyNoticeVO">
+		SELECT *
+		  FROM COURSE_NOTICE
+		 WHERE COURSE_CODE = #{courseCode} 
+		   AND COURSE_NOTICE_NO = #{courseNoticeNo}
+	
+	</select>
+	
+	<select id="selectProStudyNoticeList" resultType="com.project.portal.studynotice.service.StudyNoticeVO">
+		   select *
+     from (
+        SELECT a.*, ROWNUM notice_no
+		  FROM (SELECT 
+                       course_notice_no,
+                       course_code,
+                       course_notice_title,
+                       course_notice_content,
+                       course_notice_reg_date,
+                       course_notice_update_date,
+                       course_notice_attached_file,
+                       course_notice_hit
+                       FROM course_notice
+                       WHERE COURSE_CODE = #{notice.courseCode}
+                        <if test="notice.keyword != null and notice.keyword !=''">
+							AND ${notice.type} like '%'|| #{notice.keyword} || '%'
+						</if>	
+                       ORDER BY TO_NUMBER(COURSE_NOTICE_NO) DESC
+                        ) a
+              
+                  )
+                   <where>
+						<if test="cri != null and cri != ''">
+							<if test="cri.pageNum != null and cri.pageNum != 0">
+								AND notice_no BETWEEN (#{cri.pageNum} - 1) * #{cri.amount} AND #{cri.pageNum} * #{cri.amount}
+							</if>
+						</if>
+						</where>
+	</select>
+	
+	<select id="selectProDetailStudyNotice" resultType="com.project.portal.studynotice.service.StudyNoticeVO">
+		SELECT *
+		  FROM COURSE_NOTICE
+		 WHERE COURSE_CODE = #{courseCode} 
+		   AND COURSE_NOTICE_NO = #{courseNoticeNo}
+	</select>
+	
+	<select id="insertStudyNoticePage" resultType="com.project.portal.studynotice.service.StudyNoticeVO">
+	 	SELECT P.PROFESSOR_NAME
+ 		  FROM 
+ 		  COURSE C JOIN PROFESSOR P ON C.PROFESSOR_ID = P.PROFESSOR_ID
+ 			WHERE COURSE_CODE = #{courseCode}
+	
+	</select>
+	
+	<insert id="insertStudyNotice" parameterType="StudyNoticeVO">
+		INSERT INTO course_notice (COURSE_NOTICE_NO,
+									COURSE_CODE,
+									COURSE_NOTICE_TITLE,
+									COURSE_NOTICE_CONTENT,
+									COURSE_NOTICE_REG_DATE,
+									COURSE_NOTICE_UPDATE_DATE,
+									COURSE_NOTICE_ATTACHED_FILE,
+									COURSE_NOTICE_HIT)
+									VALUES (
+										COURSE_NOTICE_SEQ.nextval,
+										#{courseCode},
+										#{courseNoticeTitle},
+										#{courseNoticeContent},
+										SYSDATE,
+										#{courseNoticeUpdateDate},
+										#{courseNoticeAttachedFile},
+										0
+									)					
+	</insert>
+	
+	<delete id="deleteStudyNotice" parameterType="StudyNoticeVO">
+	   DELETE
+	   FROM COURSE_NOTICE
+	   WHERE COURSE_NOTICE_NO = #{courseNoticeNo}
+	   
+	</delete>
+	
+	<delete id="deleteProfStudyNoticeFile" parameterType="String">
+		         delete from course_notice_file
+         where fileURL =  #{fileUrl}
+	</delete>
+	
+	<update id="modifyProfStudyNotice" parameterType="StudyNoticeVO">
+		UPDATE COURSE_NOTICE
+		   SET COURSE_NOTICE_TITLE = #{courseNoticeTitle},
+		       COURSE_NOTICE_CONTENT = #{courseNoticeContent},
+		       COURSE_NOTICE_UPDATE_DATE = SYSDATE
+         WHERE COURSE_CODE = #{courseCode} AND COURSE_NOTICE_NO = #{courseNoticeNo}
+	</update>
+	
+	<update id="modifyProfStudyNoticeFile" parameterType="StudyNoticeVO">
+		  update course_notice_file
+		  set fileurl = #{fileUrl},
+		      fileName = #{fileName},
+		      fileOriName = #{fileOriName}
+         where groupNo = #{courseNoticeAttachedFile}
+	</update>
+	
+	
+	<insert id="fileUpload" parameterType="StudyNoticeFileVO">
+		INSERT INTO COURSE_NOTICE_FILE (FNO,
+									    FILENAME,
+									    FILEORINAME,
+									    GROUPNO,
+									    FILEURL)
+										VALUES (course_notice_file_seq.nextval,
+										 	    #{fileName},
+										 	    #{fileOriName},
+										 	    #{groupNo},
+										 	    #{fileUrl}
+										 	   ) 
+	</insert>
+	
+	<select id="fileUploadGroupNum" resultType="String">
+		SELECT MAX(GROUPNO + 1) 
+		  FROM COURSE_NOTICE_FILE
+	</select>
+	
+	<select id="getInsertFilePath" resultType="String">
+		select F.fileurl
+		from 
+         course_notice C join course_notice_file F
+         ON C.course_notice_attached_file = F.groupno
+         where C.course_notice_no = #{courseNoticeNo}
+	
+	</select>
+	
+	
+	
+	
+	
+	
+	<select id="selectFile" resultType="StudyNoticeFileVO">
+		SELECT F.FILEORINAME ,F.FILENAME,F.GROUPNO
+		FROM COURSE_NOTICE N JOIN COURSE_NOTICE_FILE F
+		ON N.COURSE_NOTICE_ATTACHED_FILE = F.GROUPNO
+		WHERE COURSE_CODE = #{courseCode} AND COURSE_NOTICE_NO = #{courseNoticeNo}
+	</select>
+	
+	<select id="filedownload" parameterType="String" resultType="StudyNoticeFileVO">
+		SELECT *    
+		FROM COURSE_NOTICE_FILE
+		WHERE FILENAME = #{fileName}
+		
+	</select>
+	
+	<update id="updateHit" parameterType="String">
+		UPDATE COURSE_NOTICE
+		SET COURSE_NOTICE_HIT = COURSE_NOTICE_HIT + 1
+		WHERE COURSE_NOTICE_NO = #{courseNoticeNo}
+	</update>
+	
+</mapper>

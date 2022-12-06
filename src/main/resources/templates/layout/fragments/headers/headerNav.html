@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style>
+</style>
+</head>
+<body>
+	<th:block th:fragment="headingFragment">
+		<nav id="headNav" class="navbar navbar-white bg-white">
+			<div>
+				<a style="font-size: 1.2rem;"class="navbar-brand" href="#">Blue Bear University</a>
+			</div>
+			<ul class="navbar-nav navbar-nav-icons flex-row">
+				<li class="nav-item"
+					th:classappend="!${#strings.contains(#httpServletRequest.requestURI, 'eclass')} ? visibility-none">
+					<a class="nav-link"
+						th:with="user = ${#strings.contains(#httpServletRequest.requestURI, 'student')} ? 'student' : 'professor'"
+						th:onclick="|location.href='@{/{uri}(uri = ${user})}'|">
+						<i class="fa-solid fa-rotate-left"></i>Main</a>
+				</li>
+				<li class="nav-item">
+					<a class="nav-link"
+						th:onclick="|location.href='@{/logout}'|">
+						<i class="fa-solid fa-right-from-bracket"></i>Logout
+					</a>
+				</li>
+			</ul>
+		</nav>
+	</th:block>
+</body>
+</html>

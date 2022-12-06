@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.project.portal.lecture.service.ProfessorLectureMapper">
+	<resultMap id="lectureMap" type="LectureVO">
+		<id column="lecture_code" property="lectureCode"/>
+		<result column="week_code" property="weekCode"/>
+		<result column="lecture_reg_date" property="lectureRegDate"/>
+		<result column="lecture_start_date" property="lectureStartDate"/>
+		<result column="lecture_end_date" property="lectureEndDate"/>
+		<result column="lecture_att_time" property="lectureAttTime"/>
+		<result column="lecture_content" property="lectureContent"/>
+		<result column="video_code" property="videoCode"/>
+		<result column="lecture_title" property="lectureTitle"/>
+		<result column="lecture_youtube_path" property="lectureYoutubePath"/>
+		<association property="lectureFile" javaType="VideoVO">
+			<result column="video_name" property="videoName"/>
+			<result column="video_stored_name" property="videoStoredName"/>
+		</association>
+	</resultMap>
+	<select id="getLectureList" resultMap="lectureMap">
+		SELECT * FROM (
+		SELECT L.*, ROWNUM R FROM (
+		SELECT L.lecture_code,
+			L.week_code,
+			L.lecture_reg_date,
+			L.lecture_start_date,
+			L.lecture_end_date,
+			L.lecture_att_time,
+			L.lecture_content,
+			L.lecture_youtube_path,
+			L.youtube_id,
+			L.video_code,
+			L.lecture_title,
+			L.course_code, 
+			V.video_name, 
+			V.video_file_path
+			FROM lecture L LEFT OUTER JOIN video V
+			ON L.video_code = V.video_code
+			<where>
+			<if test="course != null and course != ''">
+			AND L.week_code IN (SELECT week_code
+														FROM course_weekly
+														WHERE course_code = #{course.courseCode})
+			</if>
+			<if test="lecture != null and lecture != ''">
+			AND L.lecture_code = #{lecture.lectureCode}
+			</if>
+			</where>
+			ORDER BY L.week_code DESC) L
+			<if test="cri != null and cri != ''">
+				<if test="cri.pageNum != null and cri.pageNum != ''">
+					WHERE ROWNUM <![CDATA[<=]]> #{cri.pageNum} * #{cri.amount}
+				</if>
+			</if>)
+		<if test="cri != null and cri != ''">
+			<if test="cri.pageNum != null and cri.pageNum != ''">
+				WHERE R > (#{cri.pageNum} - 1) * #{cri.amount} 
+			</if>
+		</if>
+	</select>
+	<select id="getLectureTotal" resultType="int">
+		SELECT COUNT(*) FROM (
+		SELECT L.lecture_code,
+			L.week_code,
+			L.lecture_reg_date,
+			L.lecture_start_date,
+			L.lecture_end_date,
+			L.lecture_att_time,
+			L.lecture_content,
+			L.video_code,
+			L.lecture_title,
+			L.course_code, 
+			V.video_name, 
+			V.video_file_path
+			FROM lecture L LEFT OUTER JOIN video V
+			ON L.video_code = V.video_code
+			<where>
+			<if test="courseCode != null and courseCode != ''">
+			AND L.week_code IN (SELECT week_code
+														FROM course_weekly
+														WHERE course_code = #{courseCode})
+			</if>
+			</where>)
+	</select>
+	<insert id="uploadVideo" parameterType="VideoVO">
+		INSERT INTO video (
+											video_code,
+											video_file_path,
+											professor_id,
+											video_name,
+											video_stored_name,
+											video_play_time,
+											video_reg_date,
+											video_extension
+											)
+											VALUES (
+															'V'||LPAD(TO_CHAR(video_seq.NEXTVAL), 5, '0'),
+															#{videoFilePath},
+															#{professorId},
+															#{videoName},
+															#{videoStoredName},
+															#{videoPlayTime},
+															SYSDATE,
+															#{videoExtension}
+															)
+		<selectKey keyProperty="videoCode" resultType="String" order="AFTER">
+			SELECT video_code
+			FROM video
+			WHERE video_stored_name = #{videoStoredName}
+		</selectKey>
+	</insert>
+	<insert id="insertLecture" parameterType="LectureVO">
+		INSERT INTO lecture (
+												lecture_code,
+												week_code,
+												lecture_reg_date,
+												lecture_start_date,
+												lecture_end_date,
+												lecture_att_time,
+												lecture_content,
+												video_code,
+												lecture_title,
+												course_code,
+												lecture_youtube_path,
+												youtube_id
+												)
+												VALUES (
+																SUBSTR(#{weekCode}, 3, 2)||'L'||LPAD(TO_CHAR(lecture_seq.NEXTVAL), 7, '0'),
+																#{weekCode},
+																SYSDATE,
+																#{lectureStartDate},
+																#{lectureEndDate} + 0.9999,
+																#{lectureAttTime} * 60,
+																#{lectureContent},
+																#{videoCode},
+																#{lectureTitle},
+																#{courseCode},
+																#{lectureYoutubePath},
+																#{youtubeId}
+																)
+	</insert>
+	<select id="getVideo" resultType="VideoVO">
+		SELECT * 
+			FROM video
+			WHERE video_code = #{videoCode}
+	</select>
+	<delete id="deleteLecture" parameterType="LectureVO">
+		DELETE FROM lecture
+		WHERE lecture_code = #{lectureCode}
+	</delete>
+	<delete id="deleteVideo" parameterType="VideoVO">
+		DELETE FROM video
+		WHERE video_code = #{videoCode}
+	</delete>
+	<update id="updateLecture" parameterType="LectureVO">
+		UPDATE lecture
+			SET 
+				week_code = #{weekCode},
+				lecture_att_time = #{lectureAttTime} * 60,
+				lecture_title = #{lectureTitle},
+				lecture_content = #{lectureContent},
+				lecture_start_date = #{lectureStartDate},
+				lecture_end_date = #{lectureEndDate} + 0.9999,
+				video_code = #{videoCode},
+				<if test="videoCode == null">
+				lecture_youtube_path = #{lectureYoutubePath},
+				youtube_id = #{youtubeId}
+				</if>
+				<if test="videoCode != null">
+				lecture_youtube_path = NULL,
+				youtube_id = NULL
+				</if>
+				WHERE lecture_code = #{lectureCode}
+	</update>
+	<select id="getVideoList" resultType="VideoVO">
+		SELECT * FROM (
+		SELECT V.*, ROWNUM R FROM (
+		SELECT v.video_code,
+					v.video_file_path,
+					v.professor_id,
+					v.video_name,
+					l.course_code,
+					c.course_year,
+					c.course_semester,
+					c.course_name
+					FROM video v JOIN lecture l
+					ON v.video_code = l.video_code
+					JOIN course c
+					ON l.course_code = c.course_code
+					WHERE v.professor_id = #{course.professorId}
+					ORDER BY c.course_year, c.course_semester DESC
+		) V
+		WHERE 
+		<if test="cri != null and cri != ''">
+			ROWNUM <![CDATA[<=]]> #{cri.pageNum} * #{cri.amount}
+		</if>
+		)
+		<if test="cri != null and cri != ''">
+			WHERE R > (#{cri.pageNum} - 1) * #{cri.amount}
+		</if> 
+	</select>
+	<select id="getVideoTotal" resultType="int">
+		SELECT COUNT(*)
+			FROM video
+			WHERE professor_id = #{course.professorId}
+	</select>
+</mapper>

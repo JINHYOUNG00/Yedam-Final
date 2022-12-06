@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/student-eclass_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<th:block layout:fragment="studentEclassContent">
+		<div id="main">
+			<div class="page-title">
+				<h3><i class="fa-solid fa-list-check"></i> 내 강의 시험 보기</h3>
+			</div>
+			<div class="card height-sevenh">
+				<div class="card-body">
+					<table class="table">
+						<thead>
+							<tr>
+								<th>시험</th>
+								<th>주차</th>
+								<th>시험 시작일</th>
+								<th>시험 마감일</th>
+								<th>시험 응시 가능 시간</th>
+								<th>시험 문항 수</th>
+								<th>점수</th>
+								<th>시험 응시</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="exam : ${examList}">
+								<td th:if="${#strings.startsWith(exam.studentExam.examCode, 'M')}">중간</td>
+								<td th:if="${#strings.startsWith(exam.studentExam.examCode, 'F')}">기말</td>
+								<td th:text="|${#strings.substring(exam.studentExam.weekCode, 8, 10)}주차|"></td>
+								<td th:text="${#dates.format(exam.studentExam.examStartDate, 'yyyy-MM-dd')}"></td>
+								<td th:text="${#dates.format(exam.studentExam.examEndDate, 'yyyy-MM-dd')}"></td>
+								<td th:text="${exam.studentExam.examDuration}/60"></td>
+								<td th:text="${exam.studentExam.examTotalQuestion}"></td>
+								<th:block th:if="${exam.examTake == 'SUB'}">
+									<td th:text="${exam.examScore}"></td>
+									<td><button class="resultBtn btn rounded-pill btn-primary" type="button" 
+									th:data-exam-code="${exam.studentExam.examCode}"
+									th:onclick="viewExamResult()">시험 결과 보기</button></td>
+								</th:block>
+								<th:block th:if="${exam.examTake} == 'UNSUB' and ${exam.studentExam.examStartDate} lt ${#dates.createNow()}">
+									<td th:if="${exam.examScore == 0}">미응시</td>
+									<td th:unless="${exam.examScore == 0}" th:text="${exam.examScore}"></td>
+									<td><button type="button" th:data-exam-code="${exam.studentExam.examCode}"
+									class="examBtn btn rounded-pill btn-danger" 
+								th:onclick="takeExam()">
+								응시하기</button></td>
+								</th:block>		
+								<th:block th:if="${exam.studentExam.examStartDate} ge ${#dates.createNow()}">
+									<td>-</td>
+									<td><button class="btn rounded-pill btn-secondary disabled">오픈 전</button></td>
+								</th:block>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+		<script th:inline="javascript">
+			
+			function takeExam() {
+				$(document).on("click", ".examBtn", function(e) {
+					let examCode = $(e.target).data("exam-code");
+					let examDuration = $($($(e.target).parent()).siblings()[4]).text() * 60;
+					location.href="examTake?examCode=" + examCode + "&examDuration=" + examDuration;
+				})
+			}
+			
+			function viewExamResult() {
+				$(document).on("click", ".resultBtn", function(e) {
+					let examCode = $(e.target).data("exam-code");
+					location.href="examResult?examCode=" + examCode;
+				})
+			}
+		</script>
+	</th:block>
+</body>
+</html>
+
+
+
+
+
+
+

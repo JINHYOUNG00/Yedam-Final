@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.project.portal.bachelor.service.BachelorScheduleMapper">
+	
+	<select id="scheduleList" resultType="com.project.portal.bachelor.service.BachelorScheduleVO">
+		select schedule_code,
+				schedule_content,
+				schedule_start_date,
+				schedule_end_date,
+				detail_code,
+				semester,
+				TO_NUMBER(TO_CHAR(schedule_start_date, 'MM')) as "MONTH",
+                YEAR
+		from bachelor_schedule
+		where YEAR = #{year} and detail_code != 'SEME00' and detail_code != 'SEME01'
+		order by schedule_start_date
+	</select>
+	
+	<select id="getScheduleInfo" resultType="BachelorScheduleVO">
+		SELECT 
+			year,
+			semester,
+			schedule_start_date,
+			schedule_end_date
+		FROM bachelor_schedule
+		WHERE schedule_start_date = (
+																SELECT MAX(schedule_start_date)
+																FROM bachelor_schedule
+																WHERE detail_code = #{detailCode}
+																AND SYSDATE > schedule_start_date
+																)
+				and	detail_code = #{detailCode}		AND ROWNUM = 1	
+	</select>
+	
+	<select id="getCurrentScheduleInfo" resultType="BachelorScheduleVO">
+			SELECT 
+			year,
+			semester,
+			schedule_start_date,
+			schedule_end_date
+		FROM bachelor_schedule
+		WHERE schedule_start_date = (
+																SELECT MAX(schedule_start_date)
+																FROM bachelor_schedule
+																WHERE detail_code = #{detailCode}
+																AND year = #{year}
+																AND semester = #{semester}
+																)
+				and	detail_code = #{detailCode}		AND ROWNUM = 1	
+	</select>
+	
+	<select id="getYearSemester" resultType="com.project.portal.bachelor.service.BachelorScheduleVO">
+			SELECT YEAR, SEMESTER
+			FROM BACHELOR_SCHEDULE
+			WHERE DETAIL_CODE IN
+			(SELECT DETAIL_CODE
+			FROM BACHELOR_DETAIL
+			WHERE GROUP_CODE = 'SEME')
+			AND #{scheduleStartDate} BETWEEN
+			SCHEDULE_START_DATE AND SCHEDULE_END_DATE
+	</select>
+	
+	<insert id="scheduleAllInsert">
+		INSERT INTO bachelor_schedule
+		VALUES (
+		            'SC'||LPAD(
+		                        TO_CHAR(schedule_seq.NEXTVAL), 18, '0'
+		                        
+		                                    ),#{scheduleContent},#{scheduleStartDate}, #{scheduleEndDate},#{year},#{detailCode},#{semester}
+		            )
+	</insert>
+	
+	<insert id="scheduleInsert">
+		INSERT INTO bachelor_schedule
+		VALUES (
+		            'SC'||LPAD(
+		                        TO_CHAR(schedule_seq.NEXTVAL), 18, '0'
+		                        
+		                                    ),
+		                                   #{scheduleContent},
+		                                    #{scheduleStartDate, typeHandler=org.apache.ibatis.type.DateOnlyTypeHandler}, 
+		                                    #{scheduleEndDate, typeHandler=org.apache.ibatis.type.DateOnlyTypeHandler},
+		                                    #{year},
+		                                    #{detailCode},
+		                                    #{semester}
+		            )
+	</insert>
+	
+	<select id="getMonthlyList" resultType="BachelorScheduleVO">
+		SELECT
+				schedule_code,
+				schedule_content,
+				schedule_start_date,
+				schedule_end_date,
+				detail_code,
+				semester,
+				TO_NUMBER(TO_CHAR(schedule_start_date, 'MM')) as "MONTH",
+                YEAR
+        FROM bachelor_schedule
+        WHERE 
+        TO_NUMBER(TO_CHAR(schedule_start_date, 'MM')) = #{month}
+        AND YEAR = #{year}
+        <if test="detailCode != null and detailCode != ''">
+        AND detail_code NOT LIKE #{detailCode}||'%'
+        </if>
+	</select>
+	
+	<resultMap id="scheduleMap" type="BachelorGroupVO">
+		<id property="groupCode" column="group_code"/>
+		<result property="groupName" column="group_name"/>
+		<result property="groupDescription" column="group_description"/>
+		<collection property="detailList" ofType="BachelorDetailVO">
+			<id property="detailCode" column="detail_code"/>
+			<result property="detailName" column="detail_name"/>
+			<result property="detailDescription" column="detail_description"/>
+			<result property="groupCode" column="group_code"/>
+		</collection>
+	</resultMap>
+	<select id="getScheduleCode" resultMap="scheduleMap">
+		SELECT 
+			g.group_code,
+			g.group_name,
+			g.group_description,
+			d.detail_code,
+			d.detail_name,
+			d.detail_description,
+			d.group_code
+			FROM bachelor_group G JOIN bachelor_detail D
+			ON g.group_code = d.group_code
+	</select>
+</mapper>

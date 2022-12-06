@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<th:block th:fragment="testInfoFragment">
+		<div class="card-header">
+			<h4>시험 기본 정보</h4>
+		</div>
+		<div class="card-body" align="center">
+			<div id="middle" th:with="middle = ${testDates.get('middle')}">
+				<input type="hidden" name="weekCode"
+				 th:value="${middle.weekCode}">
+				<input type="hidden" name="examStartDate"
+				th:value="${#dates.format(middle.weekStartDate, 'yyyy-MM-dd')}">
+				<input type="hidden" name="examEndDate"
+				th:value="${#dates.format(middle.weekEndDate, 'yyyy-MM-dd')}"				
+				>
+			</div>
+			<div id="final" th:with="final = ${testDates.get('final')}">
+				<input type="hidden" id="final" name="weekCode"
+				 th:value="${final.weekCode}">
+				 <input type="hidden" name="examStartDate"
+				 th:value="${#dates.format({final.weekStartDate}, 'yyyy-MM-dd')}">
+				 <input type="hidden" name="examEndDate"
+				 th:value="${#dates.format({final.weekEndDate}, 'yyyy-MM-dd')}">
+			</div>
+			<form id="examInfoForm" class="form form-horizontal">
+				<div class="form-body">
+					<div class="row inputBox">
+					<!-- 시험 코드 생성시 필요한 강의 정보 -->
+					<input type="hidden" class="form-control"
+						name="courseCode" th:value="${session.courseInfo.courseCode}">
+					<input type="hidden" class="form-control" readonly
+						name="courseYear" th:value="${session.courseInfo.courseYear}">
+					<input type="hidden" class="form-control" readonly
+						name="courseSemester" th:value="${session.courseInfo.courseSemester}">
+						<div class="col-md-4">
+							<label>시험 종류</label>
+						</div>
+						<div class="col-md-8 form-group">
+							<select class="form-select" name="examCode">
+								<option value="">시험 종류를 선택해주세요.</option>
+								<option value="M">중간</option>
+								<option value="F">기말</option>
+							</select>
+						</div>
+						<div class="col-md-4">
+							<label>시험 응시 시간(분)</label>
+						</div>
+						<div class="col-md-8 form-group">
+							<input class="inline form-control" type="number" name="examDuration"
+								required value=0>
+						</div>
+						<div class="col-md-4">
+							<label>시험 총 문항수</label>
+						</div>
+						<div class="col-md-8 form-group">
+							<select class="form-select" name="examTotalQuestion">
+								<option th:each="idx : ${#numbers.sequence(5, 50, 5)}" th:value="${idx}" th:text="${idx}"></option>
+							</select>
+						</div>
+						<div class="col-md-4">
+							<label>시험 총 배점</label>
+						</div>
+						<div class="col-md-8 form-group">
+							<input class="form-control" type="number" name="examTotalScore"
+								required value=0>
+						</div>
+					</div>
+				</div>
+				<div class="col-sm-12 d-flex justify-content-end">
+					<button type="button" th:onclick="saveExamInfo()"
+						class="btn btn-primary me-1 mb-1">저장하기</button>
+					<button type="reset" class="btn btn-light-secondary me-1 mb-1">취소</button>
+				</div>
+			</form>
+		</div>
+		<script th:inline="javascript">
+		function saveExamInfo() {
+				if ($("select[name=examCode]").val() == 'M') {
+					$("#examInfoForm").append($("#middle"));
+				} 
+				if ($("select[name=examCode]").val() == 'F') {
+					$("#examInfoForm").append($("#final"));
+				}
+				$.ajax({
+					type : 'POST',
+					url : 'examInsert',
+					contentType : 'application/x-www-form-urlencoded; charset=UTF-8',
+					data : $("#examInfoForm").serialize(),
+					success : function(result) {
+						location.href=`/professor/eclass/examInsert/` + result.examCode;
+					}
+				})
+		}
+		</script>
+	</th:block>
+</body>
+</html>

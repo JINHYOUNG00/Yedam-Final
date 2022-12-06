@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<div id="prevExamList">
+		<table id="testList" class="table">
+			<thead>
+				<tr>
+					<th>년도</th>
+					<th>학기</th>
+					<th>강의명</th>
+					<th>시험종류</th>
+					<th>시험지 보기</th>
+				</tr>
+			<tbody>
+				<tr th:each="exam : ${examList}">
+					<td th:text="${exam.courseYear}"></td>
+					<td th:text="${exam.courseSemester}"></td>
+					<td th:text="${exam.courseName}"></td>
+					<td th:if="${#strings.startsWith(exam.examCode, 'M')}">중간고사</td>
+					<td th:if="${#strings.startsWith(exam.examCode, 'F')}">기말고사</td>
+					<td><button
+							class="examShow btn btn-sm rounded-pill btn-primary"
+							type="button"
+							th:data-examcode="${exam.examCode}">시험지 보기</button></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	
+	<div id="testQuestions" class="col-6">
+			<input id="allChk" type="hidden" value="0">
+			<div class="scroll">
+				<th:block th:each="ce : ${courseExam}">
+					<div class="card question"
+						th:data-examcode="${ce.examCode}">
+						<div class="card-header"
+						th:id="${ce.questionCode}">
+							<input class="form-check-input prevExamCheck" type="checkbox">&nbsp;&nbsp;<span th:text="${ce.examQuestion.questionContent}"></span>
+						</div>
+						<div class="card-body">
+							<th:block th:each="option : ${ce.examQuestion.optionList}">
+							<p>
+								<input 
+								type="radio" th:checked="${option.questionOptionNum == ce.examQuestion.questionAnswer}">
+								<span
+								th:text="|${option.questionOptionNum}. ${option.questionOptionContent}|"></span>
+								</p>
+							</th:block>
+						</div>
+					</div>
+				</th:block>
+			</div>
+			<div>
+				<button id="saveButton" type="button"
+					class="btn btn-primary btn-outline">선택 문제 담기</button>
+				<button id="selectAllButton" type="button"
+					class="btn btn-secondary btn-outline">전체 선택</button>
+			</div>
+		</div>
+</body>
+</html>

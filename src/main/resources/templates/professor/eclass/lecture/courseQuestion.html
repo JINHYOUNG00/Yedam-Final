@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/professor-eclass_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+
+	<th:block layout:fragment="professorEclassContent">
+		<style>
+		
+pre {
+	font-size:16px; 
+}		
+.hidden {
+	display: none
+}
+</style>
+		<div id="main">
+			<div class="page-title">
+				<h3>질문 목록</h3>
+			</div>
+			<div class="card">
+				<div class="card height-sevenh">
+					<div class="card-body">
+						<form name="frmsearch" action="/professor/eclass/courseQuestion">
+							<select id="type" name="type" class="form-select width-one inline">
+								<option th:value="''" th:text="--"></option>
+								<option th:each="week : ${session.courseInfo.weekPlans}" 
+								th:value="${week.weekNum}" 
+								th:text="|${week.weekNum}주차|"
+								th:selected="${pageMaker.cri.keyword != null && pageMaker.cri.keyword == week.weekCode}"></option>
+							</select> 
+							<input type="hidden" name="pageNum"
+								th:value="${pageMaker.cri.pageNum}"> <input
+								type="hidden" name="amount" th:value="${pageMaker.cri.amount}">
+
+							<button class="saveBtn btn btn-primary me-1 mb-1 search">검색</button>
+
+						</form>
+
+						<br> <br>
+
+						<table class="table table-hover">
+							<thead class="thead-primary">
+								<tr>
+									<th>번호</th>
+									<th>제목</th>
+									<th>작성자</th>
+									<th>주차</th>
+									<th>질문 등록일</th>
+									<th>답변 여부</th>
+									<th>답변 하기</th>
+								</tr>
+							</thead>
+
+							<tbody class="tbody-center">
+								<tr th:each="courseProfQuestion : ${courseProfQuestion}">
+									<td th:text="${courseProfQuestion.questionNo}"></td>
+									<td th:text="${courseProfQuestion.lectureQuestionTitle}"></td>
+									<td th:text="${courseProfQuestion.studentName}"></td>
+									<td th:text="${courseProfQuestion.weekNum}"></td>
+									<td th:text="${#dates.format(courseProfQuestion.lectureQuestionRegDate, 'yyyy-MM-dd')}">
+									<td th:text="${courseProfQuestion.lectureQuestionAnswerCheck}"></td>
+									<th:block>
+									<td th:if="${courseProfQuestion.lectureQuestionAnswerCheck} == 'X'">
+										<button type="button"
+											class="btn btn-primary courseProfQuestion"
+											th:data-code="${courseProfQuestion.lectureQuestionNum}">답변하기</button>
+									</td>
+									<td th:if="${courseProfQuestion.lectureQuestionAnswerCheck} == 'O'">
+										<button type="button"
+											class="btn btn-primary courseProfQuestion"
+											th:data-code="${courseProfQuestion.lectureQuestionNum}">수정하기</button>
+									</td>
+									</th:block>
+								</tr>
+							</tbody>
+						</table>
+
+						<div th:object="${pageMaker}">
+							<ul class="pagination justify-content-center">
+								<th:block th:if="${pageMaker.prev}">
+									<li class="page-item prev"><a class="page-link"
+										href="javascript:void(0)"
+										th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${pageMaker.cri.getLink(pageMaker.startPage - 1 , pageMaker.cri.amount, pageMaker.cri.type, pageMaker.cri.keyword)}]])">이전</a>
+									</li>
+								</th:block>
+								<th:block th:with="pageMaker = ${pageMaker}">
+									<th:block
+										th:each="num : ${#numbers.sequence(pageMaker.startPage, pageMaker.endPage)}">
+										<li class="page-item"
+											th:classappend="${pageMaker.cri.pageNum == num} ? 'active' : ''">
+											<a class="page-link" href="javascript:void(0)"
+											th:text="${num}"
+											th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${pageMaker.cri.getLink(num, pageMaker.cri.amount, pageMaker.cri.type, pageMaker.cri.keyword)}]])"></a>
+										</li>
+									</th:block>
+									<th:block th:if="${pageMaker.next}">
+										<li class="page-item next"><a class="page-link"
+											href="javascript:void(0)"
+											th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${pageMaker.cri.getLink(pageMaker.endPage + 1 , pageMaker.cri.amount, pageMaker.cri.type, pageMaker.cri.keyword)}]])">다음</a>
+										</li>
+									</th:block>
+								</th:block>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+			</div>
+
+
+			<!-- 모달창 -->
+			<div class="modal-dialog modal-xl">
+				<div class="modal fade" id="courseQuestionDetail"
+					data-bs-backdrop="static" tabindex="-1"
+					aria-labelledby="staticBackdropLabel" aria-hidden="true">
+					<div
+						class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+						<div class="modal-content">
+
+							<div class="modal-header">
+								<label class="modal-title" id="staticBackdropLabel">질문
+									답변</label>
+							</div>
+							<div class="modal-body">
+								<div class="container my-auto">
+									<div class="row">
+										<div class="card z-index-0 fadeIn3 fadeInBottom">
+											<div class="card-body">
+												<form id="frm" name="frm"
+													action="/professor/eclass/courseQuestionInsert">
+													<table class="table table-bordered mb-0" >
+														<tr class="hidePage" >
+															<td class="text-bold-500" 
+																style="background-color: rgba(0, 0, 0, 0.05); width:20%">질문번호</td>
+															<td id="questionnum" style="word-break:break-all"></td>
+														</tr>
+														<tr>
+															<td  class="text-bold-500 col-2"
+																style="background-color: rgba(0, 0, 0, 0.05); text-align:center" >제목</td>
+															<td id="title" style="word-break:break-all"></td>
+														</tr>
+
+														<tr>
+															<td  class="text-bold-500"
+																style="background-color: rgba(0, 0, 0, 0.05); text-align:center">주차</td>
+															<td id="week" style="word-break:break-all"></td>
+														</tr>
+
+														<tr>
+															<td  class="text-bold-500"
+																style="background-color: rgba(0, 0, 0, 0.05); text-align:center">질문
+																내용</td>
+															<td id="questioncontent" style="word-break:break-all"></td>
+														</tr>
+
+														<tr>
+															<td  class="text-bold-500"
+																style="background-color: rgba(0, 0, 0, 0.05); text-align:center">질문
+																등록일</td>
+															<td id="answerregdate" style="word-break:break-all"></td>
+														</tr>
+
+														<tr>
+															<td class="text-bold-500"
+																style="background-color: rgba(0, 0, 0, 0.05); word-break:break-all; table-layout:fixed;text-align:center">답변
+																내용</td>
+															<td><textarea class="form-control hidden" style="height:300px"
+																	name="lectureAnswerContent" id="Answeredit" required></textarea>
+																<pre id="answercontentview" style="word-break:break-all"></pre></td>
+														</tr>
+
+
+													</table>
+													<br>
+													<div style="text-align: center;">
+														<button type="button"
+															class="btn btn-secondary courseProfQuestionAnswer"
+															data-bs-dismiss="modal" aria-label="Close" id="AnswerReg">답변
+															등록</button>
+														<button type="button" id="AnswerMod"
+															class="btn btn-secondary hidden" data-bs-dismiss="modal"
+															th:onclick="modifyAnswer()">답변 수정</button>
+
+														<button type="button" class="btn btn-primary hidden"
+															id="Prev">이전</button>
+														<button type="button" class="btn btn-primary" id="Modify">수정</button>
+														<button id="closeModal" type="button"
+															class="btn btn-secondary" data-dismiss="modal">Close</button>
+													</div>
+												</form>
+
+
+
+											</div>
+										</div>
+									</div>
+								</div>
+
+								<div class="input-container modal-footer"></div>
+
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<script th:inline="javascript">
+    	
+    $(function () {
+		courseQuestionDetail();
+		modalOff();
+	})
+	
+	
+	
+	// 검색 버튼 처리 
+			$('.search').on("click" , function() {
+				//(검색 처리시 페이지번호 1로 가도록)
+				$('input[name=pageNum]').val('1')
+			}) 
+	
+	
+	// 질문 상세조회
+	function courseQuestionDetail () {
+    	$(".courseProfQuestion").on("click", function() {
+    		let lectureQuestionNum = ($(this).data("code"));
+    		console.log(lectureQuestionNum);
+    		
+    		$.ajax({
+    			type : "POST",  // 요청 타입
+                url : "/professor/eclass/courseQuestionDetail",      // 컨트롤러에서 대기중인 URL 주소이다.
+                data :  
+                	{lectureQuestionNum : lectureQuestionNum},
+                dataType : "json",
+                success : function(data){ // 비동기통신의 성공일경우 success 콜백
+                	// 질문 등록일 데이터 처리
+                	let questionRegDate = data.lectureQuestionRegDate.substring(0,10)
+					// 태그 제거하고 출력
+                
+                	console.log(data.lectureAnswerContent)
+                	
+                	 $("#questionnum").text(data.lectureQuestionNum)
+                	 $("#title").text(data.lectureQuestionTitle)
+	                 $("#week").text(data.weekNum)
+	                 $('#answercontentview').html(data.lectureAnswerContent)
+	                 $('#Answeredit').text(data.lectureAnswerContent)
+	                 $("#questioncontent").html(data.lectureQuestionContent)
+	                 $("#answerregdate").text(questionRegDate)
+	                
+	                 
+	                 // 답변 등록이 되어있지 않을 경우 보여질 등록(insert) modal form
+	                 if(data.lectureAnswerContent == null || data.lectureAnswerContent == '') {
+	                	 $("#Answeredit").show()
+	                	 $("#AnswerReg").show() // 답변등록
+	                	 $("#Modify").hide()
+	                	 $("#Prev").hide()
+	                	 $("#AnswerMod").hide()
+	                 } else {  // 답변 등록이 되어있는 경우 수정(update) modal form
+	                	 $("#Answeredit").hide()
+	                	 $("#AnswerReg").hide()
+	                	 $("#Modify").show()
+	                	 $('#answercontentview').show()
+	                 }     
+                	 
+                	 
+               },
+               error : function(reject) {
+            	   alert("통신 실패");	
+               }  
+    		})
+    		$('#courseQuestionDetail').modal('show');
+    	})
+   	}
+
+    
+    
+ // 모달창 끄기 버튼
+	 function modalOff() {
+		$("#closeModal").on("click", function() {
+			$('#courseQuestionDetail').modal('hide')
+			
+			
+			$('#answercontent').hide()  //답변 내용
+	 		$('#AnswerReg').hide() //답변 등록
+	 		$('#AnswerMod').hide() // 답변 수정
+	 		$('#Prev').hide() // 이전
+	 		$("#Answeredit").val('')
+	 		$('#Answeredit').hide() // 수정 textarea
+	 		$('#Modify').hide() // 수정
+	 		$('#answercontentview').hide()
+			
+		
+		})
+	} 
+ 
+ 
+ 	$("#AnswerReg").on("click" , function() {
+ 		var frmContent = frm.lectureAnswerContent.value
+	 	//답변 내용이 있는지 확인
+	 	if(frmContent == '' || frmContent == null) {
+	 		fireSwal('error', '답변 내용을 입력하세요.')
+	 		return false;
+	 	}
+	 	
+ 		
+ 		// 답변 등록 (답변내용 check 후 null 또는 빈값이 아니면 등록)
+ 		//질문 번호, 답변 내용
+ 		let lectureAnswerContent = $('[name="lectureAnswerContent"]').val()
+ 		let lectureQuestionNum = $('#questionnum').text()
+ 		lectureAnswerContent.replace('\n' , '<br>')
+ 		
+ 		
+ 		  $.ajax({
+			type : "POST",  // 요청 타입
+            url : "/professor/eclass/courseQuestionInsert",
+            data : 
+            	{ lectureAnswerContent : lectureAnswerContent,
+            	  lectureQuestionNum : lectureQuestionNum
+            	} ,
+
+            success : function(data) {
+            	fireSwal('success', '답변이 등록되었습니다.')
+	            	.then((result) => {
+	            		if (result.isConfirmed) {
+	            			location.href="/professor/eclass/courseQuestion"
+	            		}
+	            	})
+            	
+            }
+ 		}) 
+ 	})
+
+
+
+ 	
+ // 수정 버튼 처리 (수정페이지로 이동)
+	$('#Modify').click(function() {
+ 		$('#answercontent').hide()  //답변 내용
+ 		$('#AnswerReg').hide() //답변 등록
+ 		$('#AnswerMod').show() // 답변 수정
+ 		$('#Prev').show() // 이전
+ 		$('#Answeredit').show() // 수정 textarea
+ 		$('#Modify').hide() // 수정
+ 		$('#answercontentview').hide()
+	})
+	
+	// 수정 이전 버튼
+	$('#Prev').click(function() {
+ 		$('#answercontent').show()  //답변 내용
+ 		$('#AnswerReg').hide()
+ 		$('#AnswerMod').hide()
+ 		$('#Prev').hide()
+ 		$('#Answeredit').hide()
+ 		$('#Modify').show()
+ 		$('#answercontentview').show()
+	})
+	
+	// 답변 수정 처리
+	function modifyAnswer() {
+	 
+		var frmContent = frm.lectureAnswerContent.value.trim()
+	 	//답변 내용이 있는지 확인
+	 	if(frmContent == '' || frmContent == null) {
+	 		fireSwal('error', '답변 내용을 입력하세요.')
+	 		$('#answercontent').hide()  //답변 내용
+	 		$('#AnswerReg').hide() //답변 등록
+	 		$('#AnswerMod').hide() // 답변 수정
+	 		$('#Prev').hide() // 이전
+	 		$('#Answeredit').hide() // 수정 textarea
+	 		$('#Modify').hide() // 수정
+	 		$('#answercontentview').show()
+	 		return false;
+	 	}
+		
+		let lectureAnswerContent = $('[name="lectureAnswerContent"]').val() // 답변 내용
+ 		let lectureQuestionNum = $('#questionnum').text() //
+ 		//lectureAnswerContent = lectureAnswerContent.replace(/\n/g , '<br>')
+ 		  $.ajax({
+ 				type : "POST",  // 요청 타입
+ 	            url : "/professor/eclass/courseQuestionUpdate",
+ 	            data : 
+ 	            	{ lectureAnswerContent : lectureAnswerContent,
+ 	            	  lectureQuestionNum : lectureQuestionNum} ,
+ 	            success : function(success) {
+ 	            	console.log(success);
+ 	            	fireSwal('success', '답변이 수정되었습니다.')
+ 	            	.then((result) => {
+ 	            		if (result.isConfirmed) {
+ 	            		  location.href="/professor/eclass/courseQuestion"
+ 	            		}
+ 	            	})
+ 	            	
+ 	            }
+ 	 		})  
+ 	}
+    </script>
+	</th:block>
+
+
+
+</body>
+</html>

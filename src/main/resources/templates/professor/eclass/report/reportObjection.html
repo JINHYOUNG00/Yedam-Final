@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/professor-eclass_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+
+<style>
+.td-padding {
+		 height: 50px;
+	}
+</style>
+</head>
+<body>
+<th:block layout:fragment="professorEclassContent">
+		<div id="main">
+		<div class="page-title">
+		<h2>과제 이의 신청 목록</h2>
+		</div>
+		<div class="card">
+				<div class="card-body height-nineh">
+				<div class="card-body">
+				
+				<form name="frmsearch" action="reportObjection">
+		<select id="type"  name="type" class="form-select width-one inline">
+		<option th:value="''" th:text="--"></option>
+		<option th:each="week : ${session.courseInfo.weekPlans}" 
+								th:value="${week.weekNum}" 
+								th:text="|${week.weekNum}주차|"
+								th:selected="${pageMaker.cri.keyword != null && pageMaker.cri.keyword == week.weekCode}"></option>
+		</select>
+		
+		<input type="hidden" name="pageNum" th:value="${pageMaker.cri.pageNum}">
+		<input type="hidden" name="amount" th:value="${pageMaker.cri.amount}">
+		
+		<button class="saveBtn btn btn-primary me-1 mb-1 search">검색</button>
+		
+		</form>
+		<br><br>
+				
+				<table class="table table-hover" style="text-align : center; width:100%;">
+				
+					<thead class="thead-primary">
+						<tr>
+							<th class="td-padding">학번</th>
+							<th>이름</th>
+							<th>과제제목</th>
+							<th>주차</th>
+							<th>이의신청여부</th>
+							<th>답변하기</th>
+						</tr>
+					</thead>
+					<tbody class="tbody-center">
+					<tr th:each="reportObjection : ${reportObjection}">
+						
+						<td th:text="${reportObjection.studentId}" class="td-padding">
+						</td>
+						
+						<td th:text="${reportObjection.studentName}"></td>
+						<td th:text="${reportObjection.reportTitle}"></td>
+						<td th:text="${reportObjection.weekNum}"></td>
+						<th:block>
+						<td th:if="${reportObjection.reportScoreObjectionApprovalOption == 'A01'}">심사대기</td>
+						<td th:if="${reportObjection.reportScoreObjectionApprovalOption == 'A02'}">심사완료</td>
+						</th:block>
+						<th:block>
+						<td th:if="${reportObjection.reportScoreObjectionApprovalOption == 'A01'}">
+						<button type="button" class="saveBtn btn btn-primary me-1 mb-1 reportObjectionAnswer"
+						th:data-reportCode="${reportObjection.reportSubmissionCode}">답변하기</button></td>
+						<td th:if="${reportObjection.reportScoreObjectionApprovalOption != 'A01'}">
+						-</td>
+						</th:block>
+						<!-- <td><input type="hidden" class="reportSubmissionCode" th:value="${reportObjection.reportSubmissionCode}"></td> -->
+					</tr>
+					</tbody>
+				</table>
+				
+				<div th:object="${pageMaker}">
+						<ul class="pagination justify-content-center">
+						<th:block th:if="${pageMaker.prev}">
+   						 <li class="page-item prev">
+        				<a class="page-link" href="javascript:void(0)" th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${pageMaker.cri.getLink(pageMaker.startPage - 1 , pageMaker.cri.amount, pageMaker.cri.type, pageMaker.cri.keyword)}]])">이전</a>
+   						 </li>
+						</th:block>
+						<th:block th:with="pageMaker = ${pageMaker}">
+				    <th:block th:each="num : ${#numbers.sequence(pageMaker.startPage, pageMaker.endPage)}">
+				        <li class="page-item" th:classappend="${pageMaker.cri.pageNum == num} ? 'active' : ''">
+				            <a class="page-link" href="javascript:void(0)" th:text="${num}" th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${pageMaker.cri.getLink(num, pageMaker.cri.amount, pageMaker.cri.type, pageMaker.cri.keyword)}]])"></a>
+				        </li>
+				    </th:block>
+				    <th:block th:if="${pageMaker.next}">
+					    <li class="page-item next">
+					        <a class="page-link" href="javascript:void(0)" th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${pageMaker.cri.getLink(pageMaker.endPage + 1, pageMaker.cri.type, pageMaker.cri.amount, pageMaker.cri.keyword)}]])">다음</a>
+					    </li>
+						</th:block>
+						</th:block>
+						</ul>
+					</div>
+				
+				</div>
+				
+		</div>
+		</div>
+		
+		</div>
+		
+		<script th:inline="javascript">
+		// 검색 버튼 처리 
+		$('.search').on("click" , function() {
+			//(검색 처리시 페이지번호 1로 가도록)
+			$('input[name=pageNum]').val('1')
+		}) 
+		
+		// 답변 페이지 이동
+		$('.reportObjectionAnswer').on("click", function() {
+			let reportCode = ($(this).data("reportcode"));
+			location.href = "/professor/eclass/report/reportObjectionDetail/" + reportCode;
+
+		})
+
+		</script>
+		
+		</th:block>
+
+</body>
+</html>

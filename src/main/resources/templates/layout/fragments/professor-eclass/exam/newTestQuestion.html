@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<div id="newQuestion" class="card examquestion">
+		<div class="card-header" th:id="${question.questionCode}">
+			<span th:text="${question.questionContent}"></span>
+			<input type="number" name="examQuestionPoint">
+		</div>
+		<div class="card-body">
+			<th:block th:each="option : ${question.optionList}">
+				<p>
+					<input class="inline" type="radio"
+						th:checked="${option.questionOptionNum == question.questionAnswer}">
+					<span class="inline width-seven"
+						th:text="|${option.questionOptionNum}. ${option.questionOptionContent}|"></span>
+				</p>
+			</th:block>
+		</div>
+		<div class="right-align">
+			<button type="button" th:onclick="deleteQuestion([[${question.questionCode}]])" class="btn btn-sm btn-danger">삭제</button>
+		</div>
+	</div>
+</body>
+</html>

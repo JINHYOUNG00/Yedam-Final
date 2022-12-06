@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.project.portal.exam.service.ProfessorExamMapper">
+	
+	<select id="getExamList" resultType="ExamVO">
+		SELECT exam_code,
+					week_code,
+					exam_reg_date,
+					exam_start_date,
+					exam_end_date,
+					exam_duration,
+					exam_total_question,
+					exam_total_score,
+					exam_submit,
+					course_code
+			FROM exam
+			WHERE course_code = #{course.courseCode}
+			<if test="exam != null and exam != ''">
+			AND exam_code = #{exam.examCode}
+			</if>
+	</select>
+	<select id="getExamInfoList" parameterType="ExamInfoVO" resultType="ExamInfoVO">
+		SELECT course_year,
+					course_semester,
+					course_name,
+					course_code,
+					week_code,
+					exam_code 
+		FROM exam_info_vu
+		<where>
+		<if test="courseName != '' and courseName != null">
+			AND course_name LIKE '%'||#{courseName}||'%'
+		</if>
+		<if test="courseYear != 0 and courseYear != null">
+			AND course_year = #{courseYear}
+		</if>
+		<if test="courseSemester != 0 and courseSemester != null">
+			AND course_semester = #{courseSemester}
+		</if>
+		<if test="examCode != null and examCode != '' and examCode.length() == 1">
+			AND SUBSTR(exam_code, 1, 1) = #{examCode}
+		</if>
+		<if test="examCode != null and examCode != '' and examCode.length() == 12">
+			AND exam_code = #{examCode}
+		</if>
+		</where>
+	</select>
+	<resultMap id="courseExamMap" type="com.project.portal.exam.service.CourseExamVO">
+		<id column="exam_question_num" property="examQuestionNum"/>
+		<result column="exam_question_point" property="examQuestionPoint"/>
+		<result column="exam_code" property="examCode"/>
+		<result column="professor_id" property="professorId"/>
+		<result column="question_code" property="questionCode"/>
+		<collection property="examQuestion" ofType="QuestionVO">
+			<id column="question_code" property="questionCode"/>
+			<result column="question_content" property="questionContent"/>
+			<result column="question_answer" property="questionAnswer"/>
+			<collection property="optionList" ofType="com.project.portal.exam.service.QuestionOptionVO">
+			<result column="question_option_num" property="questionOptionNum"/>
+			<result column="question_option_content" property="questionOptionContent"/>
+			</collection>
+		</collection>
+	</resultMap>
+	<select id="getCourseExam" resultMap="courseExamMap">
+		SELECT e.exam_question_num, 
+		e.exam_question_point,
+		e.exam_code,
+		q.question_code, 
+		q.question_content, 
+		q.question_answer,
+		o.question_option_num,
+		o.question_option_content
+		FROM course_exam e join question q
+		on e.question_code = q.question_code
+		JOIN question_option o
+		on q.question_code = o.question_code
+		WHERE e.exam_code = #{exam.examCode}
+		<if test="filters != null">
+			<foreach collection="filters" item="item">
+			AND q.question_code != #{item.questionCode}
+			</foreach>
+		</if>
+		ORDER BY e.exam_question_num, o.question_option_num
+	</select>
+	
+	<insert id="insertExam">
+		<selectKey keyProperty="exam.examCode" resultType="String" order="BEFORE">
+			SELECT #{exam.examCode}||#{course.courseCode}||SUBSTR(#{course.courseYear}, 3, 2)||#{course.courseSemester}
+				FROM dual
+		</selectKey>
+		INSERT INTO exam (
+											exam_code,
+											week_code,
+											exam_reg_date,
+											exam_start_date,
+											exam_end_date,
+											exam_duration,
+											exam_total_question,
+											exam_total_score,
+											exam_submit,
+											course_code
+											)
+			VALUES (
+							#{exam.examCode},
+							#{exam.weekCode},
+							SYSDATE,
+							#{exam.examStartDate},
+							#{exam.examEndDate} + 0.9999,
+							#{exam.examDuration} * 60,
+							#{exam.examTotalQuestion},
+							#{exam.examTotalScore},
+							DEFAULT,
+							#{course.courseCode}
+							)
+	</insert>
+	<select id="getExamScore" resultType="ExamScoreVO">
+		SELECT * FROM (
+			SELECT A.*, ROWNUM R FROM (
+				SELECT e.student_id,
+								e.exam_code,
+								e.exam_score,
+								e.exam_take,
+								sp.student_name
+					FROM exam_score e JOIN student_pri_info sp
+					ON e.student_id = sp.student_id
+					WHERE e.exam_code IN (SELECT exam_code
+															FROM exam
+															WHERE course_code = #{course.courseCode})
+					<if test="cri != null and cri != ''">
+						<if test="cri.type == 'student_id'">
+							AND e.${cri.type}  = #{cri.keyword}
+						</if>
+						<if test="cri.type == 'exam_code'">
+							AND e.${cri.type} LIKE #{cri.keyword}||'%'
+						</if>
+					</if>
+					ORDER BY e.exam_code, e.student_id ASC
+				) A
+				<if test="cri != null and cri != ''">
+					<if test="cri.pageNum != null and cri.pageNum != ''">
+						WHERE ROWNUM <![CDATA[<=]]> #{cri.pageNum} * #{cri.amount}
+					</if>
+				</if>
+				)
+			<if test="cri != null and cri != ''">
+				<if test="cri.pageNum != null and cri.pageNum != ''">
+					WHERE R > (#{cri.pageNum} - 1) * #{cri.amount}
+				</if>
+			</if>
+	</select>
+	<select id="getExamScoreTotal" resultType="int">
+		SELECT COUNT(*) FROM (
+		SELECT student_id,
+								exam_code,
+								exam_score,
+								exam_take
+					FROM exam_score
+					WHERE exam_code IN (SELECT exam_code
+															FROM exam
+															WHERE course_code = #{course.courseCode})
+				<if test="cri != null and cri != ''">
+						<if test="cri.type == 'student_id'">
+							AND ${cri.type}  = #{cri.keyword}
+						</if>
+						<if test="cri.type == 'exam_code'">
+							AND ${cri.type} LIKE #{cri.keyword}||'%'
+						</if>
+					</if>
+												)
+	</select>
+	<update id="updateExam">
+		UPDATE exam
+			SET week_code = #{weekCode},
+			exam_start_date = #{examStartDate},
+			exam_end_date = #{examEndDate} + 0.9999,
+			exam_duration = #{examDuration} * 60,
+			exam_total_question = #{examTotalQuestion},
+			exam_total_score = #{examTotalScore}
+		WHERE exam_code = #{examCode}
+	</update>
+	<delete id="deleteExam">
+		DELETE FROM exam
+			WHERE exam_code = #{examCode}
+	</delete>
+	<insert id="insertQuestion">
+		<selectKey keyProperty="questionCode" resultType="String" order="BEFORE">
+			SELECT 'q'||LPAD(TO_CHAR(seq_q.NEXTVAL), 9, '0')
+				FROM dual
+		</selectKey>
+		INSERT INTO QUESTION 
+							(
+							question_code,
+							question_content,
+							question_answer
+							)
+							VALUES (
+							#{questionCode},
+							#{questionContent}, 
+							#{questionAnswer})
+	</insert>
+	<delete id="deleteQuestion" parameterType="QuestionVO">
+		DELETE FROM question
+			WHERE question_code = #{questionCode}
+	</delete>
+	<update id="updateQuestion" parameterType="QuestionVO">
+		UPDATE question
+			SET question_content = #{questionContent},
+			question_answer = #{questionAnswer}
+			WHERE question_code = #{questionCode}
+	</update>
+	<insert id="insertQuestionOption">
+		INSERT INTO QUESTION_OPTION (
+																question_code,
+																question_option_num,
+																question_option_content
+																)
+																			
+																	VALUES (
+																				#{questionCode},
+																				#{questionOptionNum},
+																				#{questionOptionContent}
+																				)
+	</insert>
+	
+	<insert id="insertCourseExam">
+		MERGE INTO COURSE_EXAM c
+			USING dual
+				ON (c.exam_question_num = #{examQuestionNum}
+						AND c.question_code = #{questionCode} 
+						AND c.exam_code = #{examCode})
+		WHEN MATCHED THEN
+			UPDATE SET c.exam_question_point = #{examQuestionPoint}
+			WHERE c.exam_question_num = #{examQuestionNum}
+		WHEN NOT MATCHED THEN
+			INSERT (c.exam_question_num, 
+							c.exam_question_point, 
+							c.exam_code, 
+							c.question_code, 
+							c.exam_complete, 
+							c.professor_id)
+			VALUES (
+							'eq'||LPAD(TO_CHAR(seq_eq.NEXTVAL), 8, '0'),
+							#{examQuestionPoint},
+							#{examCode},
+							#{questionCode},
+							#{examComplete},
+							#{professorId}
+							)
+	</insert>
+	<update id="updateExamStatus">
+		UPDATE exam
+			SET exam_submit = 'SUB'
+			WHERE exam_code = #{examCode}	
+	</update>
+	<update id="updateCourseExamCompletion">
+		UPDATE course_exam
+			SET exam_complete = '1'
+			WHERE exam_code = #{examCode}
+	</update>
+	<insert id="insertExamScore">
+		INSERT INTO exam_score
+					(
+					student_id, 
+					exam_code, 
+					exam_take
+					)
+					VALUES (
+									#{studentId},
+									#{examCode},
+									'UNSUB'
+									)
+	</insert>
+		<select id="getTestDate" resultType="CourseWeeklyVO">
+		  SELECT week_code,
+		  week_start_date,
+		  week_end_date
+			FROM course_weekly
+			WHERE course_code = #{course.courseCode}
+			AND week_start_date BETWEEN (SELECT schedule_start_date
+            FROM bachelor_schedule WHERE detail_code  = #{detailCode}
+            AND year = #{course.courseYear} and semester = #{course.courseSemester})
+            AND (SELECT schedule_end_date
+            FROM bachelor_schedule WHERE detail_code = #{detailCode}
+            AND year = #{course.courseYear} and semester = #{course.courseSemester})
+	</select>
+</mapper>

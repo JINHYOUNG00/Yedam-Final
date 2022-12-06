@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+			xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+			layout:decorate="~{layout/professor-eclass_layout}">
+<head>
+<script th:inline="javascript" src="//cdn.ckeditor.com/4.19.1/standard/ckeditor.js"></script>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style>
+	.hidden {
+		display : none
+	}
+</style>
+</head>
+<body>
+<th:block layout:fragment="professorEclassContent">
+
+<div id="main">
+	<div class="page-title">
+	<h3>공지사항</h3>
+	</div>
+	<div class="card card" >
+				<div class="card-body">
+	<table class="table table-bordered mb-0">
+		<tbody>
+		
+	
+		<tr>
+			<td class="text-bold-500" width="10%"
+									style="background-color: rgba(0, 0, 0, 0.05);">
+									<input type="hidden" id="courseNoticeNo" th:value="${selectProDetailStudyNotice.courseNoticeNo}">제목</td>
+			<td width="40%">
+			    <input class="form-control hidden" name="courseNoticeTitle" id="titleeditor" th:value="${selectProDetailStudyNotice.courseNoticeTitle}">
+			<div id="titleview" th:text="${selectProDetailStudyNotice.courseNoticeTitle}"></div></td>
+			<td class="text-bold-500" width="25%"
+									style="background-color: rgba(0, 0, 0, 0.05);">조회수</td>
+			<td th:text="${selectProDetailStudyNotice.courseNoticeHit}" width="25%"></td>
+			
+		</tr>
+		
+		<tr>
+		
+			
+						<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">작성일자</td>
+			<td th:text="${#dates.format(selectProDetailStudyNotice.courseNoticeRegDate, 'yyyy-MM-dd')}"></td>
+					<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">수정일자</td>
+			<td th:text="${#dates.format(selectProDetailStudyNotice.courseNoticeUpdateDate, 'yyyy-MM-dd')}"></td>
+			
+		</tr>
+		
+		<tr>
+		<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">첨부파일</td>
+			<td colspan="3">
+			<th:block th:each="selectFile : ${selectFile}">
+			<a style="display:block;" th:href="@{/courseNotice/download/{fileName}(fileName=${selectFile.fileName})}"
+			th:text="${selectFile.fileOriName}"></a>
+			</th:block>
+			</td>
+
+	
+		</tr>
+		
+	
+
+		
+		<tr>
+			<td class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">내용</td>
+			<td colspan="3">
+			<div id="contentview" style="margin-top: 2rem; min-height: 40vh;" th:utext="${selectProDetailStudyNotice.courseNoticeContent}"></div>
+			<textarea class="form-control hidden" name="courseNoticeContent" id="contenteditor" th:text="${selectProDetailStudyNotice.courseNoticeContent}">
+			    </textarea>
+			    
+            </td>
+			
+		
+			
+		</tr>
+		</tbody>
+	</table>
+	<br>
+	<button type="button" class="btn btn-primary" id="AllList">목록</button>
+	<button type="button" class="btn btn-primary" id="Delete">삭제</button>
+	<button type="button" class="btn btn-primary" id="Modify">수정</button>
+</div>
+</div>
+</div>
+
+	<script th:inline="javascript">
+	
+		// 목록 버튼 처리
+		$('#AllList').click(function() {
+			location.href ="/professor/eclass/eclassnotice"
+		})
+		
+		// 삭제 버튼 처리
+		$('#Delete').click(function() {
+			var courseNoticeNo = $('#courseNoticeNo').val();
+			console.log(courseNoticeNo)
+			$.ajax({
+				type : 'POST',
+				url : '/professor/eclass/eclassnoticedelete',
+				data : {courseNoticeNo : courseNoticeNo},
+				success : function() {
+					alert('삭제되었습니다.')
+					location.href = '/professor/eclass/eclassnotice/'
+				}
+			}) 
+		})
+		
+		// 수정 버튼 처리 (수정페이지로 이동)
+		$('#Modify').click(function() {
+			var courseNoticeNo = $('#courseNoticeNo').val();
+			location.href ='/professor/eclass/eclassnotice/' + courseNoticeNo + '/eclassnoticemodify' 
+		})
+		
+	</script>
+</th:block>
+</body>
+</html>

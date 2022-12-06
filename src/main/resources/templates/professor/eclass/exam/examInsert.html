@@ -1,0 +1,73 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/professor-eclass_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style>
+.card {
+	padding: 3%;
+}
+</style>
+</head>
+<body>
+	<th:block layout:fragment="professorEclassContent">
+		<div id="main">
+		<input type="hidden" name="professorId" th:value="${session.courseInfo.professorId}"> 
+			<div>
+				<div class="row">
+					<div class="page-title">
+						<h3>시험 생성하기</h3>
+					</div>
+					<div class="right">
+						<input id="tab1" type="radio" name="tabs" checked> <label
+							for="tab1" class="tabmenu active">시험 기본 정보</label> <input id="tab2"
+							type="radio" name="tabs"> <label for="tab2"
+							class="tabmenu hidePage">시험지 정보 불러오기</label> <input id="tab3"
+							type="radio" name="tabs"> <label for="tab3"
+							class="tabmenu hidePage">시험 문제 생성하기</label>
+					</div>
+					<th:block th:if="${command} == 1">
+						<div class="card height-seven paging">
+							<th:block
+								th:replace="layout/fragments/professor-eclass/exam/newTestInfo :: testInfoFragment">
+							</th:block>
+						</div>
+					</th:block>
+					<th:block th:if="${command} == 2">
+						<th:block th:each="exam : ${examList}">
+							<div class="card paging">
+								<th:block
+									th:replace="layout/fragments/professor-eclass/exam/updateTestInfo :: testInfoFragment">
+								</th:block>
+							</div>
+							<div class="card paging hidePage">
+								<div class="row">
+									<th:block
+										th:replace="layout/fragments/professor-eclass/exam/testList :: testListFragment">
+									</th:block>
+								</div>
+							</div>
+							<div class="card paging no-height hidePage">
+								<th:block
+									th:replace="layout/fragments/professor-eclass/exam/makeTest :: makeTestFragment">
+								</th:block>
+							</div>
+						</th:block> 
+					</th:block>
+				</div>
+			</div>
+		</div>
+		<script th:inline="javascript">
+			
+			$(function() {
+				showPage();
+				enterDate("examStartDate", "examEndDate"); 
+			})
+			
+			</script>
+	</th:block>
+</body>
+</html>

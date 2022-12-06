@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+			xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+			layout:decorate="~{layout/student-eclass_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style>
+	pre {
+		font-size:16px;
+	}
+	
+	.td-padding {
+		 height: 50px;
+	}
+</style>
+</head>
+<body>
+
+<th:block layout:fragment="studentEclassContent">
+
+	<div id="main">
+	<div class="page-title">
+		<h2>질문 목록</h2>
+		</div>
+			<div class="card">
+			<div class="card height-nineh">
+				<div class="card-body">
+		<form name="frmsearch" action="/student/eclass/courseQuestion">
+		<select id="type"  name="type" class="form-select width-one inline">
+		<option th:text="--" th:value="''"></option>
+		<option th:each="week : ${session.courseInfo.weekPlans}" 
+								th:value="${week.weekNum}" 
+								th:text="|${week.weekNum}주차|"
+								th:selected="${pageMaker.cri.keyword != null && pageMaker.cri.keyword == week.weekCode}"></option>
+		</select>
+		
+		<input type="hidden" name="pageNum" th:value="${pageMaker.cri.pageNum}">
+		<input type="hidden" name="amount" th:value="${pageMaker.cri.amount}">
+		
+		<button class="saveBtn btn btn-primary me-1 mb-1 search">검색</button>
+		
+		</form>
+		
+		<br>
+		<br>
+		
+		<table class="table" style="text-align : center; width:100%;">
+			<thead class="thead-primary">
+				<tr>
+					<th width="10%" class="td-padding" >번호</th>
+					<th width="25%">제목</th>
+					<th width="15%">질문 등록일</th>
+					<th width="10%">주차</th>
+					<th width="20%">답변 여부</th>
+					<th width="20%">상세보기</th>
+				</tr>
+			</thead>
+			
+			<tbody class="tbody-center">
+				<tr th:each="courseQuestion: ${courseQuestion}" class="td-padding">
+					<td th:text="${courseQuestion.questionNo}"></td>
+					<td th:text="${courseQuestion.lectureQuestionTitle}"></td>
+					<td th:text="${#dates.format(courseQuestion.lectureQuestionRegDate, 'yyyy-MM-dd')}"></td>
+					<td th:text="${courseQuestion.weekNum}"></td>
+					<td th:text="${courseQuestion.lectureQuestionAnswerCheck}"></td>
+					<th:block>
+					<td th:if="${courseQuestion.lectureQuestionAnswerCheck} == 'O'"> 
+					<button type="button" class="btn btn-primary btn-sm courseQuestion" th:data-code="${courseQuestion.lectureQuestionNum}">상세보기</button>
+					</td>
+					<td th:if="${courseQuestion.lectureQuestionAnswerCheck} == 'X'">-</td> 
+					</th:block>
+				</tr>
+			</tbody>
+		</table>
+		
+		<div th:object="${pageMaker}">
+						<ul class="pagination justify-content-center">
+						<th:block th:if="${pageMaker.prev}">
+   						 <li class="page-item prev">
+        				<a class="page-link" href="javascript:void(0)" th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${pageMaker.cri.getLink(pageMaker.startPage - 1 , pageMaker.cri.amount, pageMaker.cri.type, pageMaker.cri.keyword)}]])">이전</a>
+   						 </li>
+						</th:block>
+						<th:block th:with="pageMaker = ${pageMaker}">
+				    <th:block th:each="num : ${#numbers.sequence(pageMaker.startPage, pageMaker.endPage)}">
+				        <li class="page-item" th:classappend="${pageMaker.cri.pageNum == num} ? 'active' : ''">
+				            <a class="page-link" href="javascript:void(0)" th:text="${num}" th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${pageMaker.cri.getLink(num, pageMaker.cri.amount, pageMaker.cri.type, pageMaker.cri.keyword)}]])"></a>
+				        </li>
+				    </th:block>
+				    <th:block th:if="${pageMaker.next}">
+					    <li class="page-item next">
+					        <a class="page-link" href="javascript:void(0)" th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${pageMaker.cri.getLink(pageMaker.endPage + 1 , pageMaker.cri.amount, pageMaker.cri.type, pageMaker.cri.keyword)}]])">다음</a>
+					    </li>
+						</th:block>
+						</th:block>
+						</ul>
+					</div>
+	</div>
+</div>
+</div>
+</div>
+	
+	
+	<!-- 모달창 -->
+	 <div class="modal fade" id="courseQuestionDetail" data-bs-backdrop="static" tabindex="-1"
+         aria-labelledby="staticBackdropLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-xl">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <label class="modal-title" id="staticBackdropLabel">질문 상세조회</label>
+                </div>
+                <div class="modal-body">
+                        <div class="container my-auto">
+                            <div class="row">
+                                <div class="card z-index-0 fadeIn3 fadeInBottom">
+                                    <div class="card-body">
+                                    	<table class="table table-bordered mb-0">
+                                    			<tr>
+                                    				<td width="200px"  class="text-bold-500 col-2"
+									style="background-color: rgba(0, 0, 0, 0.05);">제목</td>
+                                    				<td id="title"></td>
+                                    			</tr>
+                                    			
+                                    			<tr>
+                                    				<td width="200px" class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">주차</td>
+                                    				<td id="week"></td>
+                                    			</tr>
+                                    			
+                                    			<tr>
+                                    				<td width="200px" class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">질문 내용</td>
+                                    				<td id="questioncontent"></td>
+                                    			</tr>
+                                    			
+                                    			<tr>
+                                    				<td width="200px" class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">질문 답변일</td>
+                                    				<td id="answerdate"></td>
+                                    			</tr>
+                                    			
+                                    			<tr>
+                                    				<td width="200px" class="text-bold-500"
+									style="background-color: rgba(0, 0, 0, 0.05);">답변 내용</td>
+                                    				<td>
+                                    				<pre id="answercontent" style="height:auto; width:700px; word-break:break-all;, font-size:1.5em" >
+                                    				</pre>
+                                    				</td>
+                                    			</tr>
+                                    	</table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="input-container modal-footer" style="text-align:center">
+                            <button type="button" class="btn btn-outline-danger" data-bs-dismiss="modal" aria-label="Close">
+                                확인
+                            </button>
+                        </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    	<script th:inline="javascript"> 	
+    	
+    	// 검색 버튼 처리 
+		$('.search').on("click" , function() {
+			//(검색 처리시 페이지번호 1로 가도록)
+			$('input[name=pageNum]').val('1')
+		}) 
+    	
+    	
+    	$(function () {
+    		courseQuestionDetail();
+    		modalOff();
+    	})
+    	// 질문 상세조회
+    	function courseQuestionDetail () {
+    		$(".courseQuestion").on("click", function() {
+    			let lectureQuestionNum = ($(this).data("code"));
+    			$.ajax({
+    	                type : "POST",  // 요청 타입
+    	                url : "/student/eclass/courseQuestionDetail",    
+    	                data :  
+    	                	{lectureQuestionNum : lectureQuestionNum},
+    	                dataType : "json",
+    	                success : function(data){ 
+    	                	// 날짜 포멧 변경
+    	                   let answerRegDate = data.lectureAnswerRegDate.substring(0,10)
+    	                   $("#title").text(data.lectureQuestionTitle)
+    	                   $("#week").text(data.weekNum)
+    	                   $("#questioncontent").html(data.lectureQuestionContent)
+    	                   $("#answerdate").text(answerRegDate)
+    	                   $("#answercontent").html(data.lectureAnswerContent)
+    	                   $('#courseQuestionDetail').modal('show');
+
+    	                },
+    	                error : function(reject){ 
+    	                    alert("통신 실패.");
+    	                }
+    	            }); 
+    	        });	
+    		}
+    	
+    	// 모달창 끄기 버튼
+		function modalOff() {
+			$("#closeModal").on("click", function() {
+				$('#courseQuestionDetail').modal('hide');
+			})
+		}
+    	
+    	
+    	// 주차별 검색값 유지
+
+    	
+		</script>
+
+</th:block>
+	
+
+
+</body>
+</html>

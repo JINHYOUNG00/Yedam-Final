@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/admin_layout}">
+<head>
+<meta charset="UTF-8">
+<title>학생 리스트</title>
+</head>
+<body>
+	<th:block layout:fragment="adminContent">
+		<div id="main">
+			<div class="page-title">
+				<h2>학생 정보 조회</h2>
+			</div>
+			<div class="card height-eight">
+				<div class="card-body">
+					<form name="frm_search" action="/admin/studentList" method="get">
+						<input type="hidden" name="pageNum" value="1"> <input
+							type="hidden" name="amount" value="10">
+						<th:block th:with="cri = ${pageMaker.cri}">
+							<label for="type">학과</label>
+							<input type="text" id="type" name="type"
+								class="form-control inline width-two" th:value="${cri.type}">
+							<label for="keyword">이름</label>
+							<input type="text" id="keyword" name="keyword"
+								class="form-control inline width-two" th:value="${cri.keyword}">
+							<button type="submit" class="btn btn-primary adminStudentSearch">검색</button>
+						</th:block>
+					</form>
+					<hr>
+					<table class="table table-hover">
+						<thead class="thead-primary">
+							<tr>
+								<th>학번</th>
+								<th>이름</th>
+								<th>학과</th>
+								<th>학년</th>
+								<th>상태</th>
+								<th>성별</th>
+								<th>생년월일</th>
+								<th>연락처</th>
+							</tr>
+						</thead>
+						<tbody class="tbody-center">
+							<tr th:each="list : ${studentList}"
+							th:onclick="detailStudent([[${list.studentId}]])">
+								<td th:text=${list.studentId}></td>
+								<td th:text=${list.studentName}></td>
+								<td th:text=${list.departName}></td>
+								<td th:text=${list.studentGrade}></td>
+								<td th:text=${list.studentStatusNm}></td>
+								<td th:text=${list.studentGenderNm}></td>
+								<td th:text="${#dates.format(list.studentBirth, 'yyyy-MM-dd')}"></td>
+								<td th:text=${list.studentPhone}></td>
+							</tr>
+						</tbody>
+					</table>
+					<div th:object="${pageMaker}" th:with="cri = ${pageMaker.cri}">
+						<ul class="pagination justify-content-center">
+							<th:block th:if="${pageMaker.prev}">
+								<li class="page-item prev"><a class="page-link"
+									href="javascript:void(0)"
+									th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${cri.getLink(pageMaker.startPage - 1, cri.amount, cri.type, cri.keyword)}]])">이전</a>
+								</li>
+							</th:block>
+							<th:block th:with="pageMaker = ${pageMaker}">
+								<th:block
+									th:each="num : ${#numbers.sequence(pageMaker.startPage, pageMaker.endPage)}">
+									<li class="page-item"
+										th:classappend="${pageMaker.cri.pageNum == num} ? 'active' : ''">
+										<a class="page-link" href="javascript:void(0)"
+										th:text="${num}"
+										th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${cri.getLink(num, cri.amount, cri.type, cri.keyword)}]])"></a>
+									</li>
+								</th:block>
+								<th:block th:if="${pageMaker.next}">
+									<li class="page-item next"><a class="page-link"
+										href="javascript:void(0)"
+										th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${cri.getLink(pageMaker.endPage + 1, cri.amount, cri.type, cri.keyword)}]])">다음</a>
+									</li>
+								</th:block>
+							</th:block>
+						</ul>
+					</div>
+					<form name="frm_select" action="/admin/adminStudentInfoSelect"
+						method="post">
+						<input type="hidden" name="studentId" id="studentId" />
+					</form>
+				</div>
+			</div>
+		</div>
+		<script th:inline="javascript">
+			function detailStudent (data) {
+				location.href=`/admin/adminStudentInfoSelect?studentId=` + data;
+			}
+		</script>
+	</th:block>
+</body>
+</html>

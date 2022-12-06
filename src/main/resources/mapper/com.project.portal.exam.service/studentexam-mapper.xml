@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.project.portal.exam.service.StudentExamMapper">
+	
+	<resultMap id="studentExamMap" type="ExamScoreVO">
+		<result column="student_id" property="studentId"/>
+		<result column="exam_code" property="examCode"/>
+		<result column="exam_take" property="examTake"/>
+		<result column="exam_score" property="examScore" />
+		<association property="studentExam" javaType="ExamVO">
+			<id column="student_exam_code" property="examCode"/>
+			<result column="week_code" property="weekCode"/>
+			<result column="exam_reg_date" property="examRegDate"/>
+			<result column="exam_start_date" property="examStartDate"/>
+			<result column="exam_end_date" property="examEndDate"/>
+			<result column="exam_duration" property="examDuration"/>
+			<result column="exam_total_question" property="examTotalQuestion"/>
+			<result column="exam_total_score" property="examTotalScore"/>
+		</association>
+	</resultMap>
+	
+	<select id="getExamInfo" resultMap="studentExamMap">
+		SELECT e.exam_code,
+		e.week_code,
+		e.exam_reg_date,
+		e.exam_start_date,
+		e.exam_end_date,
+		e.exam_duration,
+		e.exam_total_question,
+		e.exam_total_score,
+		e.exam_submit,
+		e.course_code, 
+		s.exam_code student_exam_code, 
+		s.exam_score, 
+		s.student_id, 
+		s.exam_take
+		FROM exam e join exam_score s
+		on e.exam_code = s.exam_code
+		WHERE e.week_code IN (SELECT week_code
+													FROM course_weekly
+													WHERE course_code = #{course.courseCode})
+		AND s.student_id = #{studentId}
+	</select>
+	
+	<resultMap id="courseExamMap" type="CourseExamVO">
+		<id column="exam_question_num" property="examQuestionNum"/>
+		<result column="exam_question_point" property="examQuestionPoint"/>
+		<result column="exam_code" property="examCode"/>
+		<result column="question_code" property="questionCode"/>
+		<association property="examQuestion" javaType="QuestionVO">
+			<id column="question_code" property="questionCode"/>
+			<result column="question_content" property="questionContent"/>
+			<result column="question_answer" property="questionAnswer"/>
+			<collection property="optionList" ofType="com.project.portal.exam.service.QuestionOptionVO">
+			<result column="question_option_num" property="questionOptionNum"/>
+			<result column="question_option_content" property="questionOptionContent"/>
+			</collection>
+		</association>
+		<association property="studentAnswer" javaType="StudentExamVO">
+			<result column="exam_code" property="examCode"/>
+			<result column="exam_question_num" property="examQuestionNum"/>
+			<result column="student_question_num" property="studentQuestionNum"/>
+			<result column="student_right_option" property="studentRightOption"/>
+		</association>
+	</resultMap>
+	
+	<select id="getStudentExam" resultMap="courseExamMap">
+		SELECT e.exam_question_num, 
+						e.exam_code,
+						e.exam_question_point, 
+						q.question_code, 
+						q.question_content, 
+						q.question_answer,
+						o.question_option_num,
+						o.question_option_content
+		FROM course_exam e join question q
+						on e.question_code = q.question_code
+		JOIN question_option o
+						on q.question_code = o.question_code
+		WHERE e.exam_code = #{examCode}
+	</select>
+	
+	<resultMap id="studentResultMap" type="ExamResultVO">
+		<id property="examQuestionNum" column="exam_question_num"/>
+		<result property="examCode" column="exam_code"/>
+		<result property="examQuestionPoint" column="exam_question_point"/>
+		<result property="questionCode" column="question_code"/>
+		<result property="questionContent" column="question_content"/>
+		<result property="questionAnswer" column="question_answer"/>
+		<result property="studentQuestionNum" column="student_question_num"/>
+		<result property="studentQuestionAnswer" column="student_question_answer"/>
+		<result property="studentRightOption" column="student_right_option"/>
+		<result property="studentId" column="student_id"/>
+		<result property="studentName" column="student_name"/>
+		<collection property="optionList" ofType="QuestionOptionVO">
+			<result property="questionOptionNum" column="question_option_num"/>
+			<result property="questionOptionContent" column="question_option_content"/>
+		</collection>
+	</resultMap>	
+	
+	<select id="getExamResult" resultMap="studentResultMap">
+		SELECT exam_code,
+					exam_question_num,
+					exam_question_point,
+					question_code,
+					question_content,
+					question_answer,
+					question_option_num,
+					question_option_content,
+					student_question_num,
+					student_question_answer,
+					student_right_option,
+					student_id,
+					student_name
+			FROM result_v
+			WHERE student_id = #{studentId}
+			AND exam_code = #{exam.examCode}
+	</select>
+	
+	<insert id="insertExamResult">
+	<foreach collection="list" item="answer" separator=" " open="INSERT ALL" close="SELECT * FROM dual">
+		INTO student_exam
+					(exam_question_num,
+					student_question_num,
+					student_question_answer,
+					student_right_option,
+					student_id)
+					VALUES 
+					(
+					#{answer.examQuestionNum},
+					#{answer.studentQuestionNum},
+					#{answer.studentQuestionAnswer},
+					#{answer.studentRightOption},
+					#{answer.studentId}
+					)
+	</foreach>
+	</insert>
+	
+	<update id="updateExamScore">
+		UPDATE exam_score SET exam_score = #{examScore},
+													exam_take = #{examTake}
+		WHERE student_id = #{studentId} AND exam_code = #{examCode}
+	</update>
+	
+</mapper>
+
+

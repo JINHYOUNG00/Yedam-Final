@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<style>
+.searchContainer .col-sm-3 {
+	display: inline-block;
+}
+</style>
+</head>
+<body>
+	<th:block th:fragment="testListFragment">
+		<div class="col-6">
+			<div>
+				<form id="prevExamListFrm">
+					<div class="row">
+						<div class="page-title">
+							<h4>이전 강의 시험지 검색</h4>
+						</div>
+						<input type="hidden" name="courseName" th:value="${session.courseInfo.courseName}">
+						<div class="col-sm-2">
+							<div class="form-group">
+								<label>강의 년도:</label> <input type="number" name="courseYear" value="0"
+									class="form-control round">
+							</div>
+						</div>
+						<div class="col-sm-2">
+							<div class="form-group">
+								<label>강의 학기:</label> <input type="number" name="courseSemester" value="0"
+									class="form-control round">
+							</div>
+						</div>
+						<div class="col-sm-3">
+						<br />
+							<div class="form-group">
+								<select name="examCode" class="form-select">
+									<option value="">시험 종류</option>
+									<option value="M">중간</option>
+									<option value="F">기말</option>
+								</select>
+							</div>
+						</div>
+						<div class="col-sm-2">
+							<br />
+							<button id="getPrevExamListBtn" class="btn btn-md btn-primary"
+								type="button">검색</button>
+						</div>
+					</div>
+				</form>
+			</div>
+			<div id="prevExamList">
+			</div>
+		</div>
+		<div id="testQuestions" class="col-6">
+			<div id="scrollPage">
+				<div id="noTest" class="card">
+					<div class="card-body">
+						<h1>선택된 시험지가 없습니다.</h1>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script th:inline="javascript">
+			$(function() {
+				getPrevExamList();
+				$("#getPrevExamListBtn").trigger("click");
+				getCourseExam();
+			})
+
+			// 이전 시험 리스트 보기
+			function getPrevExamList() {
+				$(document).on("click", "#getPrevExamListBtn", function() {
+					$.ajax({
+						method : 'POST',
+						url : `/professor/eclass/prevExamList`,
+						data : $("#prevExamListFrm").serialize()
+					}).done(function(fragment) {
+						$("#prevExamList").replaceWith(fragment);
+					})
+				})
+			}
+
+			// 이전 시험지 보기 
+			function getCourseExam() {
+				$(document).on("click", ".examShow", function(e) {
+					let questionList = getQuestions();
+					let exam = {
+							examCode : $(e.target).data("examcode")
+					}
+					let data = {exam : exam, filterQuestions : questionList};
+					$.ajax({
+						method : 'POST',
+						url : `/professor/eclass/getCourseExam`,
+						contentType : 'application/json',
+						data : JSON.stringify(data)
+					}).done(function(fragment) {
+						$("#testQuestions").replaceWith(fragment);
+					})
+				})
+			}
+
+		</script>
+	</th:block>
+</body>
+</html>

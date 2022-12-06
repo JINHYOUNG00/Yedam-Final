@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<th:block th:fragment="makeTestFragment">
+		<div class="card-header">
+			<h4 class="left-f" th:with="c = ${session.courseInfo}" 
+			th:text="|${c.courseYear}년도 ${c.courseSemester}학기 ${c.courseName} | + (${#strings.startsWith(exam.examCode, 'M')} ? '중간고사' : '기말고사')"></h4>
+			<div class="btn-group mb-3 right-f" role="group">
+			<button type="button" id="tempBtn" class="btn btn-primary btn-md"
+				data-toggle="tooltip"
+				title="작성된 시험 정보를 임시적으로 저장할 수 있습니다.">임시저장</button>
+			<button type="button" id="submitBtn" class="btn btn-danger btn-md"
+				data-toggle="tooltip"
+				title="시험지를 최종적으로 생성합니다.">시험지 생성</button>
+			<button type="button" id="pointBtn" class="btn btn-info btn-md"
+				data-toggle="tooltip"
+				title="(문제 수/총 배점)만큼 나누어 자동적으로 배점 처리합니다.">자동 배점</button>
+			</div>
+		</div>
+		<div id="testPaperGenerated" class="card-body">
+			<div th:if="${exam.examTotalQuestion} == 0" id="defaultPaper"
+				class="card-body">
+				<p>시험 문항 수를 선택해주세요.</p>
+			</div>
+			<th:block th:unless="${exam.examTotalQuestion == 0}">
+				<div
+					th:each="idx : ${#numbers.sequence(0, (exam.examTotalQuestion/5 - 1))}"
+					th:id="|testPage-${idx}|" class="questionContainer hidePage">
+					<div class="row">
+						<th:block
+							th:each="i : ${#numbers.sequence(0 + idx * 5, 4 + idx * 5)}">
+							<div class="col-md-6 col-12">
+								<div class="card questionBox" th:id="${i}">
+									<th:block th:if="${examQuestions}">
+										<div class="card examquestion"
+											th:if="${#lists.size(examQuestions) > i}"
+											th:id="${examQuestions[i].examQuestionNum}">
+											<div class="card-header"
+												th:id="${examQuestions[i].questionCode}">
+												<span
+													th:text="${examQuestions[i].examQuestion.questionContent}"></span>
+												<input type="number"
+													th:value="${examQuestions[i].examQuestionPoint}"
+													name="examQuestionPoint">
+											</div>
+											<div class="card-body">
+												<th:block
+													th:each="option : ${examQuestions[i].examQuestion.optionList}">
+													<p>
+														<input type="radio"
+															th:checked="${option.questionOptionNum == examQuestions[i].examQuestion.questionAnswer}">
+														<span
+															th:text="|${option.questionOptionNum}. ${option.questionOptionContent}|"></span>
+													</p>
+												</th:block>
+											</div>
+											<div class="btn-group inline mb-3 right-align" role="group">
+													<button type="button" th:onclick="deleteQuestion([[${examQuestions[i].questionCode}]])" class="btn btn-sm btn-danger">삭제</button>
+											</div>
+										</div>
+										<button th:if="${#lists.size(examQuestions) <= i}"
+											class="card-body btn btn-outline-primary addQuestionBtn"
+											type="button">+</button>
+									</th:block>
+								</div>
+							</div>
+						</th:block>
+						<div class="pageBtnContainer">
+							<th:block th:if="${idx} != 0">
+								<button type="button" th:data-idx="${idx}" th:onclick="movePage"
+									class="prevBtn btn btn-primary btn-lg">
+									<i class="fa-solid fa-angle-left"></i>
+								</button>
+							</th:block>
+							<th:block th:if="${idx != (exam.examTotalQuestion/5 - 1)}">
+								<button type="button" th:data-idx="${idx}" th:onclick="movePage"
+									class="nextBtn btn btn-primary btn-lg">
+									<i class="fa-solid fa-angle-right"></i>
+								</button>
+							</th:block>
+						</div>
+					</div>
+				</div>
+
+			</th:block>
+		</div>
+		<div id="template" style="display: none;">
+			<div class="card newQuestion">
+				<div class="card-header">
+					<textarea class="form-control" rows="2" placeholder="문제를 입력하세요"></textarea>
+				</div>
+				<div class="card-body">
+					<th:block th:each="idx : ${#numbers.sequence(1, 4)}">
+						<label style="display: block;"
+							class="col-form-label form-check-label"> <input
+							class="inline height-e" type="radio" name="answer"> <input
+							class="inline width-nine height-e form-control" type="text"
+							name="questionOptionContent">
+						</label>
+					</th:block>
+				</div>
+				<div align="center">
+					<button
+						class="createQuestionBtn btn btn-primary btn-sm rounded-pill"
+						type="button">문제 생성</button>
+					<button class="cancelQuestionBtn btn btn-secondary btn-sm rounded-pill" 
+					 type="button">
+						취소</button>
+				</div>
+			</div>
+		</div>
+		<script th:inline="javascript">
+		$(function() {
+			saveQuestions();
+			tempInsert();
+			addQuestions();
+			$("#testPage-0").removeClass("hidePage");
+			movePage();
+			checkAll();
+			createQuestion();
+			cancelQuestion();
+			submitTest();
+			dividePoint();
+			$("[data-toggle=tooltip]").tooltip({placement: "bottom", opacity: '0.2'});
+		})
+
+		// 전체 문제 선택
+		function checkAll() {
+			$(document).on("click", "#selectAllButton", function() {
+				if ($("#allChk").val() == '0') {
+					$(".question .card-header input").prop('checked', true);
+					$("#allChk").val('1');
+				} else if ($("#allChk").val() == '1') {
+					$(".question .card-header input").prop('checked', false);
+					$("#allChk").val('0');
+				} 
+			})
+		}
+		
+		// 문제 담기
+		function saveQuestions() {
+			$(document).on("click", "#saveButton", function() {
+				savedQuestions = $(".question .card-header input:checked").parent().parent();
+				let emptyBox = $(".addQuestionBtn");
+				// 담으려는 문제보다 실제 시험 문항수가 많을 경우 경고창을 띄우고 처리 취소 처리
+				if ($(savedQuestions).length > $(emptyBox).length) {
+					fireSwal('warning', '선택한 문제가 시험 문항수보다 많습니다.');
+					return;
+				}
+				// 내부의 문제 추가 버튼 삭제 후 내용 입력
+				$(savedQuestions).each((idx, val) => {
+						$(savedQuestions[idx]).removeClass("question").addClass("examquestion")
+						.children(".card-header").append("<input type=number name=examQuestionPoint>");
+						$(emptyBox).eq(idx).parent()
+						.empty().append($(savedQuestions[idx]));
+				})
+				returnQuestion();
+				fireSwal('success', '문제 담기 완료');
+			})
+		}
+
+		// 문제 직접 입력하기
+		function addQuestions() {
+			$(document).on("click", ".addQuestionBtn", function(e) {
+				$(this).parent().empty().append($("#template")
+				.children().clone());
+			})
+		}
+		
+		// 입력 문제 생성
+		function createQuestion() {
+			$(document).on("click", ".createQuestionBtn", function(e) {
+				let id = $(this).parents(".questionBox").attr("id");
+				let div = $(this).parent().siblings();
+				let answer = $("div.questionBox#" + id).find("input[name=answer]")
+				.index($("input[name=answer]:checked"));
+				if (answer == -1) {
+					fireSwal('warning', '문제의 답을 입력해주세요.');
+					return;
+				}
+				let question = {
+						questionContent : $($(div[0]).children("textarea")).val().trim()
+				}
+				let optionList = [];
+				$(div[1]).children("label").each((idx, val) => {
+					question.questionAnswer = answer + 1;
+					let option = {
+							questionOptionNum : idx + 1,
+							questionOptionContent : $($(val).children()[1]).val()
+					}
+					optionList.push(option);
+				})
+				question.optionList = optionList;
+				insertExam(id, question);
+			})
+		}
+		
+		function cancelQuestion(e) {
+			$(document).on("click", ".cancelQuestionBtn", function(e) {
+				let parent = $(e.target).parents(".questionBox");
+				$(parent).empty().append(`<button class="card-body btn btn-outline-primary addQuestionBtn" type="button">+</button>`);
+			})
+		}
+		
+		// 문제 생성하는 AJAX 호출
+		function insertExam(id, question) {
+			$.ajax({
+				method : 'POST',
+				url : `/professor/eclass/createQuestion`,
+				contentType : 'application/json',
+				data : JSON.stringify(question)
+			})
+				.done(function(fragment) {
+					$("div.questionBox#" + id).html(fragment);
+					fireSwal('success', '문제 입력이 완료되었습니다.');
+				})
+		}
+		
+		// 문제 삭제하기 
+		function deleteQuestion(code) {
+				let data = {
+						questionCode : code
+				};
+				$.ajax({
+					method : 'DELETE',
+					url : `/professor/eclass/deleteQuestion`,
+					contentType : 'application/json',
+					data : JSON.stringify(data),
+					success : function(result) {
+						if (result == 'success') {
+							fireSwal('success', '문제 삭제가 완료되었습니다.');
+							$("div#" + code).parent().empty().append(`<button class="card-body btn btn-outline-primary addQuestionBtn" type="button">+</button>`);
+						}
+					}
+				}) 
+		}
+		
+		// 문제 자동 배점
+		function dividePoint() {
+			$(document).on("click", "#pointBtn", function() {
+				let questionList = getQuestions();
+				let msg = countCheck(questionList);
+				if (msg) {
+					fireSwal(msg.icon, msg.text);
+				} else if (!msg) {
+					let totalScore = $("input[name=examTotalScore]").val();
+					if (totalScore%questionList.length == 0) {
+						$("input[name=examQuestionPoint]").each((idx, val) => {
+							let pointDivided = totalScore/questionList.length;
+							$(val).val(pointDivided);
+							fireSwal('success', '자동 배점이 완료되었습니다.');
+						})
+					} else {
+						fireSwal('warning', '소숫점으로 떨어지는 점수는 입력할 수 없습니다. 시험 총점 또는 시험 문항 수를 수정해주세요.');
+					}
+				}
+			})
+		}
+		
+		// 시험 문제 추출
+		function getQuestions() {
+			let questions = $(".examquestion");
+			let courseExamList = [];
+			$(questions).each((idx, val) => {
+				let courseExam = {};
+				let header = $(val).children(".card-header");
+				let qinfo = $(header).children();
+				courseExam.examQuestionPoint = $(header).children("span").next().val();
+				courseExam.examCode = $("input[name=examCode]").val();
+				courseExam.examQuestionNum = $(val).attr("id");
+				courseExam.questionCode = $(header).attr("id");
+				courseExam.examComplete = '0';
+				courseExam.professorId = $("input[name=professorId]").val();
+				courseExamList.push(courseExam);
+			})
+			return courseExamList;
+		}
+		
+		// 시험지 임시저장 
+		function tempInsert() {
+			$(document).on("click", "#tempBtn", function() {
+				let courseExamList = [];
+				courseExamList = getQuestions();
+				let command = 'temp';
+				save(command, courseExamList);
+			})
+		}
+		
+		// 임시 저장 서버 요청
+		function save(command, courseExamList) {
+			let data = {
+					courseExamList : courseExamList,
+					command : command
+			}
+			$.ajax({
+				method : 'POST',
+				url : `/professor/eclass/saveTest`,
+				contentType : 'application/json',
+				data : JSON.stringify(data)
+			})
+				.then(function(result) {
+				if (result == 'success') {
+					fireSwal('success', '임시 저장이 완료되었습니다.')
+						.then(function(result) {
+							if (result.isConfirmed) {
+								location.href=`/professor/eclass/examList`;
+							}
+						})
+				} else if (result == 'submitted') {
+					fireSwal('success', '시험지 생성이 완료되었습니다.')
+						.then(function(result) {
+						if (result.isConfirmed) {
+							location.href=`/professor/eclass/generateTestPaper/` + $("input[name=examCode]").val();
+						}
+					})
+				} 
+			})
+		}
+		
+		function submitTest() {
+			$(document).on("click", "#submitBtn", function() {
+				// 문항 수 확인
+				let courseExamList = [];
+				courseExamList = getQuestions();
+				let msg1 = countCheck(courseExamList);
+				let msg2 = pointCheck(courseExamList);
+				let msg3 = pointSumCheck(courseExamList);
+				if (!msg1 && !msg2 && !msg3) {
+					let command = 'submit';
+					save(command, courseExamList);
+				} else {
+					(msg1) ? fireSwal(msg1.icon, msg1.text) : '';
+					(msg2) ? fireSwal(msg2.icon, msg2.text) : '';
+					(msg3) ? fireSwal(msg3.icon, msg3.text) : '';
+				}
+			})
+		}
+		
+		// 문항수 확인
+		function countCheck(courseExamList) {
+			let totalQuestion = $("input[name=examTotalQuestion]").val();
+			if (courseExamList.length != totalQuestion) {
+				let msg = {
+						icon : 'warning',
+						text : '시험 문제 수가 부족합니다.'
+				}
+				return msg;
+			}
+			return null;
+		}
+		
+		// 문제 배점 유무
+		function pointCheck(courseExamList) {
+			const noPoint = (element) => element.examQuestionPoint == 0 || element.examQuestionPoint == '';
+			let noPointIdx = courseExamList.findIndex(noPoint);
+			if (noPointIdx > -1) {
+				let msg = {
+						icon : 'warning',
+						text : '각 문제의 배점이 다 채워지지 않았습니다.'
+				}
+				return msg;
+			}
+			return null;
+		}
+		
+		// 문제 배점 합 
+		function pointSumCheck(courseExamList) {
+			let pointChk = courseExamList.reduce(function(accum, curr) {
+				return accum + parseInt(curr.examQuestionPoint);
+			}, 0);
+			if (pointChk != $("input[name=examTotalScore]").val()) {
+				let msg = {
+						icon : 'warning',
+				}
+				pointChk > $("input[name=examTotalScore]").val() ? 
+						msg.text = '문제 배점의 합이 총점보다 큽니다.' : 
+							msg.text = '문제 배점의 합이 총점보다 작습니다.';
+				return msg;
+			}
+			return null;
+		}
+		
+		// 입력한 문제 다시 반환
+		function returnQuestion() {
+			$(".prevExamCheck").each((idx, val) => {
+				$(val).on("change", function() {
+					if ($(val).is(":checked") == false) {
+						let currentBox = $(val).parents(".questionBox");
+						let prevTest = $("#testQuestions .scroll");
+						let question = $(val).parents(".examquestion");
+						$(val).siblings("input[type=number]").remove();
+						$(question).removeClass("examquestion")
+						.addClass("question")
+						.appendTo(prevTest);
+						currentBox.append(`<button class="card-body btn btn-outline-primary addQuestionBtn" type="button">+</button>`);
+					}
+				})
+			})
+		}
+	</script>
+	</th:block>
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/student_layout}">
+
+<head>
+	<meta charset="UTF-8">
+	<title>Insert title here</title>
+	<style>
+
+		/* 전체 테이블 */
+		table{
+			text-align: center;
+		}
+
+		/* 학생정보 테이블 */
+		#sInfo{
+			margin: auto;
+			color: black;
+		}
+		#sInfo thead{
+			background-color: #435ebe;
+			color: white;
+		}
+		#sInfo tbody{
+			background-color: white;
+		}
+			
+		/* 스크롤 테이블 헤더 고정 */
+		#rTable {
+			color: black;
+		}
+
+		#courseList {
+			margin-top: 2%;
+		}
+
+		#rTable thead{
+			background-color: #435ebe;
+			position: sticky;
+			top: 0px;
+			color: white;
+		}
+
+		.checkCode {
+			margin-bottom: 10px;
+		}
+
+		.checkCode input{
+			border-radius: 8px;
+		}
+
+		#frmchoice {
+			margin-bottom: 10px;
+		}
+
+		#searchBtn {
+			margin-left: 10px;
+		}
+
+		#makeCode {
+			margin-left: 10px;
+			margin-right: 10px;
+		}
+
+		#codeCheck {
+			margin-left: 10px;
+		}
+
+		/* 수강꾸러미 실패 테이블 */
+		#pfTable {
+			color: black;
+		}
+
+		#pnList {
+			margin-top: 2%;
+		}
+
+		#pfTable thead {
+			background-color: #435ebe;
+			color: white;
+		}
+
+		/* 수강신청 성공 테이블 */
+		#rsTable {
+			color: black;
+		}
+
+		#rsList {
+			margin-top: 2%;
+		}
+
+		#rsTable thead {
+			background-color: #435ebe;
+			color: white;
+		}
+
+		p{
+			color: black;
+			padding-left: 20px;
+			font-size: large;
+		}
+	</style>
+</head>
+
+<body>
+	<th:block layout:fragment="studentContent">
+		<div id="main" class="page-title">
+			<h2>수강 신청</h2>
+			<hr>
+			<!-- 학생 정보 -->
+			<div class="card">
+			<div class="card-body">
+				<table class="table table-bordered" id="sInfo">
+					<thead>
+						<tr>
+							<th>학 번</th>
+							<th>성 명</th>
+							<th>학 년</th>
+							<th>대 학</th>
+							<th>전 공</th>
+							<th>신청 가능학점</th>
+							<th>교양 신청 가능학점</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr th:each="item:${studentInfo}">
+							<td th:text="${item.studentId}"></td>
+							<td th:text="${item.studentName}"></td>
+							<td th:text="${item.studentGrade}"></td>
+							<td th:text="${item.collegeName}"></td>
+							<td th:text="${item.departName}"></td>
+							<td>20</td>
+							<td>5</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<hr>
+			<h3>개설강의 LIST</h3>
+			<!-- 학과별 강의 검색 -->
+			<div class="card" id="courseList">
+				<div class="card-body">
+			<form name="frmchoice" id="frmchoice">
+				<select id="departCode" name="departCode">
+					<option selected>--- 학과선택 ---</option>
+					<option value="">전체 강의</option>
+					<optgroup label="인문대학">
+						<option value="JAPA">일어일문학과</option>
+						<option value="ENGL">영어영문학과</option>
+					</optgroup>
+					<optgroup label="사회과학대학">
+						<option value="PSYC">심리학과</option>
+					</optgroup>
+					<optgroup label="자연과학대학">
+						<option value="BIOL">생물학과</option>
+						<option value="CHEM">화학공학과</option>
+						<option value="PHYS">물리학과</option>
+					</optgroup>
+					<optgroup label="소프트웨어대학">
+						<option value="ELEG">전기공학과</option>
+					</optgroup>
+				</select>
+				<button class="btn rounded-pill btn-primary" type="submit" id="searchBtn">검색</button>
+			</form>
+
+			<!-- 자동입력방지 코드 -->
+			<form name="frm" class="checkCode">
+				<input id="makeBtn" type="text" size="18" name="output" placeholder="자동신청 방지코드">
+				<input type="button" value="코드 생성" onClick="populateform(this.form.thelength.value)"
+					class="btn rounded-pill btn-primary" id="makeCode">
+				<input type="text" size="18" name="che" id="regBtn">
+				<input type="button" value="확인" onClick="check()" 
+					   class="btn rounded-pill btn-primary" id="codeCheck">
+				<b hidden="">문자 길이:</b><input type="text" name="thelength" size="3" value="5" hidden="">
+			</form>
+
+			<!-- 강의 리스트 -->
+			<div class="overflow-auto" style="max-height: 300px;" id="rDiv">
+				<table class="table table-bordered table-hover" id="rTable">
+					<thead>
+						<tr>
+							<th>강의 코드</th>
+							<th>이수 구분</th>
+							<th>강의 명</th>
+							<th>학 점</th>
+							<th>담당 교수</th>
+							<th>신청 인원</th>
+							<th>수강 정원</th>
+							<th>신 청</th>
+						</tr>
+					</thead>
+					<tbody id="rBody">
+						<tr th:each="item:${registerList}">
+							<td th:text="${item.courseCode}"></td>
+							<td th:text="${item.courseSortation}"></td>
+							<td th:text="${item.courseName}"></td>
+							<td th:text="${item.courseCredit}"></td>
+							<td th:text="${item.professorName}"></td>
+							<td th:text="${item.studentCount}"></td>
+							<td th:text="${item.courseLimit}"></td>
+							<td><button type="button" class="regInsertButton btn rounded-pill btn-primary" th:data-code="${item.courseCode}"
+									th:data-name="${item.courseName}" disabled>신 청</button></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		</div>
+		<hr>
+
+			<!-- 꾸러미 실패 내역 -->
+			<h3>수강꾸러미 내역</h3>
+			<div class="card" id="pnList">
+				<div class="card-body">
+					<table class="table table-bordered" id="pfTable">
+						<thead>
+							<tr>
+								<th>과목 코드</th>
+								<th>이수 구분</th>
+								<th>강의 명</th>
+								<th>학 점</th>
+								<th>담당 교수</th>
+								<th>신청 인원</th>
+								<th>수강 정원</th>
+								<th>신 청</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="item:${packageNList}">
+								<td th:text="${item.courseCode}"></td>
+								<td th:text="${item.courseSortation}"></td>
+								<td th:text="${item.courseName}"></td>
+								<td th:text="${item.courseCredit}"></td>
+								<td th:text="${item.professorName}"></td>
+								<td th:text="${item.studentCount}"></td>
+								<td th:text="${item.courseLimit}"></td>
+								<td><button type="button" class="regInsertButton btn rounded-pill btn-primary" th:data-code="${item.courseCode}"
+										th:data-name="${item.courseName}" disabled>신 청</button></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+			</div>
+			<hr>
+				<!-- 신청 성공 리스트 -->
+				<h3 style="display: inline;">신청과목 LIST</h3>
+				<p style="display: inline;">신청가능 학점:<span id="cTotal"
+					th:text="!${registerAllCredit}?20:20-${registerAllCredit.regCredit}"></span></p>
+				<div class="card" id="rsList">
+					<div class="card-body">
+					<table class="table table-bordered" id="rsTable">
+						<thead>
+							<tr>
+								<th>강의 코드</th>
+								<th>이수 구분</th>
+								<th>강의 명</th>
+								<th>학 점</th>
+								<th>담당 교수</th>
+								<th hidden>신청 인원</th>
+								<th hidden>수강 정원</th>
+								<th>신청 취소</th>
+							</tr>
+						</thead>
+						<tbody id="rSuccessBody">
+							<tr th:each="item:${successList}">
+								<td th:text="${item.courseCode}"></td>
+								<td th:text="${item.courseSortation}"></td>
+								<td th:text="${item.courseName}"></td>
+								<td th:text="${item.courseCredit}"></td>
+								<td th:text="${item.professorName}"></td>
+								<td th:text="${item.studentCount}" hidden></td>
+								<td th:text="${item.courseLimit}" hidden></td>
+								<td><button type="button" class="regDeleteButton btn rounded-pill btn-primary"
+										th:data-code="${item.courseCode}" disabled>취 소</button></td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
+				</div>
+		</div>
+		<script th:inline="javascript">
+
+			function registerCreditTotalSum() {
+				let creditCount = 0;
+
+				Array.from(rSuccessBody.children).forEach(function (item) {
+					creditCount += parseInt(item.children[3].textContent);
+				});
+				return creditCount;
+			}
+
+			function setRegisterTotalData() {
+				const creditCount = registerCreditTotalSum();
+				document.getElementById("cTotal").innerHTML = (20 - creditCount);
+			}
+
+			function lSortationCheck() {
+				let creditCount = 0;
+
+				Array.from(rSuccessBody.children).forEach(function (item) {
+					if ((item.children[1].textContent).startsWith('L')) {
+						creditCount += parseInt(item.children[3].textContent);
+					}
+				});
+				return creditCount;
+			}
+
+			// 자동입력방지 코드 생성
+			var keyList = "abcdefghABCDEFGH0123456789"
+			var temp = ''
+			function generatepass(plength) {
+				temp = ''
+				for (i = 0; i < plength; i++)
+					temp += keyList.charAt(Math.floor(Math.random() * keyList.length))
+				return temp
+			}
+			function populateform(enterlength) {
+				document.frm.output.value = generatepass(enterlength)
+			}
+
+			//입력방지 코드 일치 여부
+			function check() {
+				if (!document.frm.che.value) {
+					return fireSwal('warning','자동방지코드를 입력하세요');
+				} else if (document.getElementById("makeBtn").value === document.frm.che.value) {
+					var rTable = document.getElementById("rTable");
+					var ableBtn = Array.from(rTable.children[1].children);
+
+					var rsTable = document.getElementById("rsTable");
+					var rsableBtn = Array.from(rsTable.children[1].children);
+
+					var pfTable = document.getElementById("pfTable");
+					var pfableBtn = Array.from(pfTable.children[1].children);
+
+					ableBtn.forEach(function (findDisabled) {
+						findDisabled.children[7].children[0].disabled = false;
+					});
+
+					rsableBtn.forEach(function(findDisabled){
+						findDisabled.children[7].children[0].disabled = false;
+					});	
+
+					pfableBtn.forEach(function(findDisabled){
+						findDisabled.children[7].children[0].disabled = false;
+					});
+
+
+					return fireSwal('success','인증 완료');
+				} else {
+					return fireSwal('warning', '다시입력해주세요');
+				}
+			}
+
+			$(function () {
+				$(".regInsertButton").on("click", registerInsert)
+
+			})
+
+			// 수강 취소 후 다시 신청할 때의 오류 방지코드
+			function registerInsert(oThis) {
+				let that = oThis instanceof jQuery.Event ? $(this) : oThis;
+				let code = oThis instanceof jQuery.Event ? that.data("code") : that.getAttribute("th:data-code");
+				let name = oThis instanceof jQuery.Event ? that.data("name") : that.getAttribute("th:data-name");
+				let allCourseCredit = registerCreditTotalSum();
+				const selectCode = $(that)[0].parentElement.parentElement;
+				const selectNum = parseInt(selectCode.children[3].textContent);
+
+				if ((allCourseCredit + selectNum) > 20) {
+					return fireSwal('warning','최대 학점을 초과할수없습니다.');
+				}
+
+				if ((selectCode.children[1].textContent).startsWith("L", "l")) {
+					let lSortationTotal = lSortationCheck();
+					if ((lSortationTotal + parseInt(selectCode.children[3].textContent)) > 5) {
+						return fireSwal('warning', '교양학점은 5점을 초과할 수 없습니다.');
+					}
+				}
+
+				if ((parseInt(selectCode.children[5].textContent)) >= (parseInt(selectCode.children[6].textContent))) {
+					return fireSwal('warning', '수강 정원이 초과했습니다.');
+				}
+
+				// 신청 버튼
+				$.ajax({
+					url: "/student/registerInsert",
+					method: "post",
+					dataType: "json",
+					data: {
+						"courseCode": code,
+						"courseName": name
+					},
+					dataType: "json",
+					success: function (item) {
+						let content = "<tr>"
+							+ "<td>" + item.courseCode + "</td>"
+							+ "<td>" + item.courseSortation + "</td>"
+							+ "<td>" + item.courseName + "</td>"
+							+ "<td>" + item.courseCredit + "</td>"
+							+ "<td>" + item.professorName + "</td>"
+							+ "<td hidden>" + item.studentCount + "</td>"
+							+ "<td hidden>" + item.courseLimit + "</td>"
+							+ "<td><button type='button'	class='regDeleteButton btn rounded-pill btn-primary'	data-code= " + item.courseCode + ">취 소</button></td></tr>";
+						$("#rSuccessBody").append(content);
+						var rTable = document.getElementById("rTable");
+						var ableBtn = Array.from(rTable.children[1].children);
+						ableBtn.forEach(function (findDisabled) {
+							if (findDisabled.children[0].textContent === item.courseCode) {
+								findDisabled.remove();
+							}
+						});
+						setRegisterTotalData();
+					},
+					error: function () {
+						fireSwal('warning', '이전에 수강하신 강의입니다.');
+					}
+				});
+			}
+
+			// 수강 취소 버튼
+			$(function () {
+				$("#rSuccessBody").on("click", ".regDeleteButton", registerDelete)
+				function registerDelete() {
+					let code = $(this).data("code")
+					let tr = $(this).closest("tr");
+					let cancelCourse = this.parentElement.parentElement;
+					$.ajax({
+						url: "/student/registerDelete",
+						method: "post",
+						dataType: "json",
+						data: {
+							"courseCode": code,
+							"courseName": name
+						},
+						dataType: "json",
+						success: function (item) {
+							let cancel = "<tr><td>" + cancelCourse.children[0].textContent + "</td>"
+								+ "<td>" + cancelCourse.children[1].textContent + "</td>"
+								+ "<td>" + cancelCourse.children[2].textContent + "</td>"
+								+ "<td>" + cancelCourse.children[3].textContent + "</td>"
+								+ "<td>" + cancelCourse.children[4].textContent + "</td>"
+								+ "<td>" + cancelCourse.children[5].textContent + "</td>"
+								+ "<td>" + cancelCourse.children[6].textContent + "</td>"
+								+ "<td><button type='button' class='regInsertButton btn rounded-pill btn-primary'	th:data-code= " + cancelCourse.children[0].textContent + " th:data-name= " + cancelCourse.children[2].textContent + " onclick='registerInsert(this)' >신 청</button></td></tr>"
+							$("#rBody").append(cancel);
+							tr.remove();
+							setRegisterTotalData();
+						}
+					});
+				}
+			})
+		</script>
+	</th:block>
+</body>
+</html>

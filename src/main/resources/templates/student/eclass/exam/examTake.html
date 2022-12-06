@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/no-nav_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<th:block layout:fragment="bodyContent">
+		<div class="studentExamContainer">
+			<input id="studentId" type="hidden" th:value="${session.id}">
+			<input id="examCode" type="hidden" th:value="${examInfo.examCode}">
+			<div >
+				<h3 th:with="c = ${session.courseInfo}" 
+				th:text="|${c.courseYear}년 ${c.courseSemester}학기 ${c.courseName} | + (${#strings.startsWith(studentExam[0].examCode, 'M')} ? '중간고사' : '기말고사')"></h3>
+			</div>
+			<div id="testMain">
+				<div class="col-12">
+					<div class="col-2 col-lg-2 card"
+						style="text-align: center; position: fixed; top: 5%; left: 81%;">
+						<label for="timer">잔여 시간: </label><input id="timer" type="text"
+							th:data-duration="${examInfo.examDuration}" value="" readonly>
+						<button id="submitBtn" class="btn btn-primary" type="button"
+							th:onclick="submitTest">제출하기</button>
+						<h3 align="center" class="card-header">OMR</h3>
+						<div class="omrCard hidePage" th:id="|omrTable-${idx}|"
+							th:each="idx : ${#numbers.sequence(0, #lists.size(studentExam)/10 - 1)}">
+							<table class="table card-body">
+								<tr
+									th:each="num : ${#numbers.sequence(1 + idx * 10, 10 + idx * 10)}">
+									<th th:text="${num}"></th>
+									<td th:each="opt : ${#numbers.sequence(1, 4)}"><span
+										th:text="${opt}"></span></td>
+									<!-- <td><i class="fa-regular fa-1"></i></td>
+									<td><i class="fa-regular fa-2"></i></td>
+									<td><i class="fa-regular fa-3"></i></td>
+									<td><i class="fa-regular fa-4"></i></td> -->
+								</tr>
+							</table>
+							<div class="omrBtnContainer">
+								<th:block th:if="${idx} != 0">
+									<button type="button" th:data-idx="${idx}"
+										th:onclick="moveOmrPage()"
+										class="prevBtn btn btn-primary btn-sm">
+										<i class="fa-solid fa-angle-left"></i>
+									</button>
+								</th:block>
+								<th:block th:if="${idx != (#lists.size(studentExam)/10 - 1)}">
+									<button type="button" th:data-idx="${idx}"
+										th:onclick="moveOmrPage()"
+										class="nextBtn btn btn-primary btn-sm">
+										<i class="fa-solid fa-angle-right"></i>
+									</button>
+								</th:block>
+							</div>
+						</div>
+					</div>
+					<div class="col-9" style="float: left;">
+						<div
+							th:each="i : ${#numbers.sequence(0, (#lists.size(studentExam)/5) - 1)}"
+							th:id="|testPage-${i}|" class="questionContainer hidePage">
+							<th:block
+								th:each="idx : ${#numbers.sequence(0 + i * 5, 4 + i * 5)}">
+								<div th:with="r = ${studentExam[idx]}"
+									th:data-q-num="${r.examQuestionNum}" class="exam card">
+									<p class="card-header"
+										th:text="|${idx + 1}. ${r.examQuestion.questionContent}
+								(${r.examQuestionPoint}점)|"></p>
+									<input type="hidden"
+										th:value="${r.examQuestion.questionAnswer}"
+										th:data-point="${r.examQuestionPoint}">
+									<div class="testContainer card-body">
+										<th:block
+											th:each="option, index : ${r.examQuestion.optionList}">
+											<div class="optionList">
+												<input type="radio" class="options"
+													th:name="${r.examQuestionNum}"
+													th:data-index="${index.index}" th:data-num="${idx + 1}"
+													th:data-point="${r.examQuestionPoint}"
+													th:data-value="${option.questionOptionNum}"
+													th:text="| ${option.questionOptionContent}|" />
+											</div>
+										</th:block>
+									</div>
+								</div>
+							</th:block>
+							<div class="pageBtnContainer">
+								<th:block th:if="${i} != 0">
+									<button type="button" th:data-idx="${i}"
+										th:onclick="movePage()" class="prevBtn btn btn-primary btn-lg">
+										<i class="fa-solid fa-angle-left"></i>
+									</button>
+								</th:block>
+								<th:block th:if="${i != (#lists.size(studentExam)/5 - 1)}">
+									<button type="button" th:data-idx="${i}"
+										th:onclick="movePage()" class="nextBtn btn btn-primary btn-lg">
+										<i class="fa-solid fa-angle-right"></i>
+									</button>
+								</th:block>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script src="https://code.jquery.com/jquery-3.6.0.js"
+			integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk="
+			crossorigin="anonymous"></script>
+		<script th:inline="javascript">
+			$(function() {
+				omrMarking();
+				examTimer();
+				examTimeOut();
+				submitTest();
+				$("#testPage-0").removeClass("hidePage");
+				$("#omrTable-0").removeClass("hidePage");
+				movePage();
+				moveOmrPage();
+				createDataTable();
+				
+				// OMR 마킹
+				function omrMarking() {
+					$(".testContainer").on("change", "input", function(e) {
+							let omr = $("table th");
+							let num = $(e.target).data("num");
+							let value = $(e.target).data("index");
+							$(omr).each(function(idx, elem) {
+								if (num == $(elem).text()) {
+									let omrOption = $(elem).siblings().children("span");
+									$(omrOption).removeClass("marked");
+									$(omrOption[value]).addClass("marked");
+								}
+							});
+					})
+				}
+				
+				// 시험 잔여 시간 타이머
+				function examTimer() {
+					// 1분 = 60초
+					let totalTime = $("#timer").data("duration") * 1000;
+					let min = $("timer").data("duration");
+					let sec = 60;
+					examTimer = setInterval(function() {
+						// 시간 계산 
+						totalTime = totalTime - 1000;
+						min = totalTime/(60*1000);
+						let timeMin = (min >= 10) ? Math.floor(min) : "0" + Math.floor(min);
+						let timeSec = '';
+						if (sec > 0) {
+							sec = sec - 1;
+							timeSec = (sec >= 10) ? sec : "0" + sec;
+						}
+						if (sec === 0) {
+							sec = 60;
+							timeSec = "00";
+						}
+						$("#timer").val(timeMin + ":" + timeSec);
+					}, 1000);
+				}
+				
+				// 시험 시간 종료
+				function examTimeOut() {
+					let totalTime = $("#timer").data("duration") * 1000;
+					setTimeout(function() {
+						clearInterval(examTimer);
+						fireSwal('info', '시험 응시가 종료되었습니다. 자동 제출됩니다.');
+						$("#submitBtn").trigger("click");
+					}, totalTime);
+					$("#submitBtn").trigger("click");
+				}
+			})
+			
+			// 학생의 답 리스트
+			function answerSheet(answers) {
+				let map = Array.from(answers).map((answer, idx) => {
+					let option = $(answer).find(".optionList input:checked");
+					let right = $(answer).find("input[type=hidden]");
+					return answer = {
+							examCode : document.querySelector("#examCode").value,
+							examQuestionNum : $(answer).data("q-num"),
+							studentQuestionNum : idx + 1,
+							studentQuestionAnswer : option.length != 0 ? $(option).data("value") : 0,
+							studentId : document.querySelector("#studentId").value,
+							studentRightOption : $(option).data("value") == $(right).val() ? $(right).data("point") : 0 
+					}
+				})
+				return map;
+			}
+			
+			// 학생의 답 
+			function emptyAnswer(answers) {
+				let map = Array.from(answers).filter((answer, idx) => {
+					let option = $(answer).find(".optionList input:checked");
+					return (option.length == 0);
+				})
+				return map.length;
+			}
+			
+			// 답지 내기
+			function submitTest() {
+				$(document).on("click", "#submitBtn", function() {
+					// 답안지에 옵션 체크되지 않은 문제 있는 경우
+					let checkEmpty = emptyAnswer(document.querySelectorAll(".exam"));
+					if (checkEmpty != 0 && $("#timer").val() != '00:00') {
+						fireSwal("warning", "답안지 작성이 완료되지 않았습니다.");
+						return;
+					} else {
+					// 학생의 시험 제출지
+					let answerList = answerSheet(document.querySelectorAll(".exam"));
+					let totalScore = answerList.reduce((sum, answer) => sum + answer.studentRightOption, 0);
+
+					// 학생 시험
+					let examScore = {
+						studentId : document.querySelector("#studentId").value,
+						examCode : document.querySelector("#examCode").value,
+						examScore : totalScore,
+						examTake : 'SUB'
+					}
+					
+					let data = {
+						answer : answerList,
+						score : examScore
+					}
+
+					  $.ajax({
+						method : 'POST',
+						url : `/student/eclass/examTake`,
+						contentType : 'application/json; charset=utf-8',
+						data : JSON.stringify(data),
+						success : function(result) {
+							window.location.href = /*[[@{/student/eclass/examList}]]*/'';
+						}
+					})   
+					}
+				});
+			}
+			
+		</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/student_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<th:block layout:fragment="studentContent">
+		<div id="main" class="page-title">
+			<div class="grid-container-four">
+				<div class="gridImg grid-item"
+					style="background-image: url(/images/btnImg/info3.png);"
+					th:onclick="|location.href='@{/student/studentInfoSelect}'|">
+					<h3>내 정보</h3>
+				</div>
+				<div class="gridImg grid-item"
+					style="background-image: url(/images/btnImg/grade3.png);"
+					th:onclick="|location.href='@{/student/semesterGradeSelect}'|">
+					<h3>성적 조회</h3>
+				</div>
+				<div class="gridImg grid-item"
+					style="background-image: url(/images/btnImg/eclass2.png);"
+					th:onclick="|location.href='@{/student/courseList}'|">
+					<h3>E-Class</h3>
+				</div>
+				<div class="gridImg grid-item"
+					style="background-image: url(/images/btnImg/calendar2.png);"
+					th:onclick="|location.href='@{/student/schedule}'|">
+					<h3>학 사</h3>
+				</div>
+			</div>
+			<div class="grid-container-two">
+				<div class="grid-item">
+					<div class="card height-eight">
+						<div class="card-header">
+							<h4 class="center">이번 달 학사 일정</h4>
+						</div>
+						<div class="card-body">
+							<div id="calendar"></div>
+						</div>
+					</div>
+				</div>
+				<div class="grid-item">
+					<div class="card height-eight no-bottom">
+						<div class="card-header">
+						<h4 class="center">공지 사항</h4>
+						</div>
+						<div class="card-body">
+							<div id="noticeFragment">
+							</div>
+						</div>
+					</div>
+					<div align="right">
+						<span><a th:href="@{/student/notice}">+more</a></span>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script th:inline="javascript">
+			$(function() {
+				monthlyCalendar();
+				getNotice("student");
+			})
+			
+			// 이달의 정보 
+			function getCalendar() {
+				return $.ajax({
+					method: 'POST',
+					url: `/student/getMonthly`,
+				})
+			}
+
+		</script>
+	</th:block>
+</body>
+</html>

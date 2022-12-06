@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/professor-eclass_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<th:block layout:fragment="professorEclassContent">
+		<div id="main">
+			<div class="page-title">
+				<h3>수강생 과제 관리</h3>
+			</div>
+			<div class="card height-eight">
+				<div class="card-header">
+					<form th:action="@{/professor/eclass/studentScore}">
+						<input type="hidden" name="amount"
+							th:value="${pageMaker.cri.amount}"> <input type="hidden"
+							name="pageNum" value=1> 
+							<input type="hidden" name="type" value="report_code">
+							<select class="form-select"
+							style="width: 20%; display: inline;" name="keyword">
+							<option value="">과제</option>
+							<option th:each="week, idx : ${rList}"
+								th:selected="${pageMaker.cri.keyword == week.reportCode}"
+								th:value="${week.reportCode}"
+								th:text="|${#strings.substring(week.weekCode, 8, 10)}주차 ${week.reportTitle}|"></option>
+						</select>
+						<button type="submit" class="btn btn-md rounded-pill btn-primary">검색</button>
+					</form>
+					<button type="button" style="float: right;" id="weekComplete"
+						class="btn btn-danger" data-bs-toggle="tooltip"
+						data-bs-placement="bottom" title="과제 점수를 일괄적으로 등록할 수 있습니다."
+						th:onclick="updateWeekScore()"
+						th:classappend="${pageMaker.cri.keyword == null or pageMaker.cri.keyword == ''} ? hidePage">
+						일괄 입력</button>
+				</div>
+				<div class="card-body">
+					<table class="table">
+						<thead class="thead-primary">
+							<tr>
+								<th>과제 제목</th>
+								<th>학번</th>
+								<th>이름</th>
+								<th>과제 점수</th>
+								<th>과제 총점</th>
+								<th>첨부파일</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="r : ${reportList}">
+								<th:block th:each="re : ${rList}" th:if="${re.reportCode == r.reportCode}">
+								<td
+									th:text="${re.reportTitle}"></td>
+								<td th:text="${r.studentId}"></td>
+								<td th:text="${r.studentInfo.studentName}"></td>
+								<td class="width-three"
+									th:if="${r.reportSubmissionOption == 'UNSUB'}">미제출</td>
+								<td class="width-three"
+									th:if="${r.reportSubmissionOption == 'SUB' && r.reportFileCode == NULL}">0점</td>
+								<td class="width-three"
+									th:if="${r.reportSubmissionOption == 'SUB' && r.reportFileCode != NULL}">
+									<label>과제 점수: </label>
+									<input type="number"
+									class="form-control inline width-five"
+									th:id="|score-${r.reportSubmissionCode}|"
+									th:value="${r.reportScore != null} ? ${r.reportScore}">
+									<button type="button"
+										th:data-code="${r.reportSubmissionCode}"
+										th:data-total="${re.reportAssignedScore}"
+										th:onclick="updateScore($(this).data('code'), $(this).data('total'))"
+										th:text="${r.reportSubmissionOption != 'UNSUB'} ? '입력'"
+										class="scoreBtn btn btn-sm rounded-pill btn-primary"></button></td>
+								<td th:text="${re.reportAssignedScore}"></td>
+								<td th:if="${r.reportFileCode == null}">-</td>
+								<td th:if="${r.reportFileCode != null}"><a
+									th:href="@{/report/download/{reportFileCode}/{userCode}(reportFileCode = ${r.reportFileCode}, userCode = '02')}">과제
+										파일</a></td>
+								</th:block>
+							</tr>
+						</tbody>
+					</table>
+					<div th:object="${pageMaker}" th:with="cri = ${pageMaker.cri}">
+						<ul class="pagination justify-content-center">
+							<th:block th:if="${pageMaker.prev}">
+								<li class="page-item prev"><a class="page-link"
+									href="javascript:void(0)"
+									th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${cri.getLink(pageMaker.startPage - 1, cri.amount, cri.type, cri.keyword)}]])">이전</a>
+								</li>
+							</th:block>
+							<th:block th:with="pageMaker = ${pageMaker}">
+								<th:block
+									th:each="num : ${#numbers.sequence(pageMaker.startPage, pageMaker.endPage)}">
+									<li class="page-item"
+										th:classappend="${pageMaker.cri.pageNum == num} ? 'active' : ''">
+										<a class="page-link" href="javascript:void(0)"
+										th:text="${num}"
+										th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${cri.getLink(num, cri.amount, cri.type, cri.keyword)}]])"></a>
+									</li>
+								</th:block>
+								<th:block th:if="${pageMaker.next}">
+									<li class="page-item next"><a class="page-link"
+										href="javascript:void(0)"
+										th:onclick="movePagination([[${#httpServletRequest.requestURI}]], [[${cri.getLink(pageMaker.endPage + 1, cri.amount, cri.type, cri.keyword)}]])">다음</a>
+									</li>
+								</th:block>
+							</th:block>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script th:inline="javascript">
+			
+			// 배열에 담을 오브젝트 생성
+			function makeScore(code, score) {
+				return data = {
+						reportSubmissionCode : code,
+						reportScore : score
+				}
+			}
+			
+			// 과제 총 점수보다 학생 점수가 큰지 확인 
+			function compareScore(score, total) {
+				return (total < score);
+			}
+			
+			// 과제 성적 (단건) 수정 
+			function updateScore(score, total) {
+				let subList = [];
+				let subScore = $("#score-" + score).val();
+				if (subScore == '' || !subScore) {
+					fireSwal("warning", "학생의 점수를 입력해주세요.");
+					return;
+				}
+				if (compareScore(subScore, total)) {
+					fireSwal("warning", '학생의 과제 점수가 총점보다 큽니다.');
+					return;
+				}
+				let data = makeScore(score, $("#score-" + score).val());
+				subList.push(data);
+				updateScoreAjax(subList);
+			}
+			
+			// 주별 과제 성적 일괄 등록
+			function updateWeekScore() {
+				let subList = [];
+				let score = false;
+				if ($(".scoreBtn").length == 0) {
+					fireSwal("warning", "성적을 입력할 학생이 없습니다.");
+					score = true;
+				}
+				$(".scoreBtn").each((idx, val) => {
+					let code = $(val).data("code");
+					let subScore = $("#score-" + code).val();
+					if (compareScore(subScore, $(val).data("total"))) {
+						fireSwal("warning", '학생의 과제 점수가 총점보다 큽니다.');
+						score = true;
+					} 
+					if (subScore == 0) {
+						fireSwal('warning', '학생의 과제 점수를 입력해주세요.');
+						score = true;
+					}
+					subList.push(makeScore(code, subScore));
+				})
+				
+				if (score == true) {
+					return;
+				}
+				updateScoreAjax(subList);
+			}
+			
+			// 과제 성적 수정 AJAX 호출
+			function updateScoreAjax(data) {
+				$.ajax({
+					method : 'POST',
+					url : `/professor/eclass/updateScore`,
+					contentType : 'application/json',
+					data : JSON.stringify(data),
+					success : function(result) {
+						if (result == 'success') {
+							fireSwal('success', '과제 성적 수정이 완료되었습니다.')
+								.then((result) => {
+									if (result.isConfirmed) {
+										location.reload();
+									}
+								})
+						}
+					}
+				})
+			}
+
+		</script>
+	</th:block>
+</body>
+</html>

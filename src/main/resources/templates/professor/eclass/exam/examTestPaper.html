@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/professor-eclass_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<th:block layout:fragment="professorEclassContent">
+		<div id="main">
+			<input type="hidden" name="examCode" th:value="${courseExamList[0].examCode}">
+			<input type="hidden" name="courseCode" th:value="${session.courseInfo.courseCode}">
+			<div class="page-title">
+				<h3 class="inline">시험지 확인하기</h3>
+				<div class="btn-group inline right-f" role="group">
+				<button type="button" id="testSubmitBtn" class="btn btn-primary btn-md"
+				th:classappend="${command == 1} ? hidePage">
+					제출
+				</button>
+				<button type="button" id="updateTestBtn" class="btn btn-danger btn-md">
+					수정
+				</button>
+				<button type="button" id="cancelBtn" class="btn btn-secondary btn-md">
+					나가기
+				</button>
+				</div>
+			</div>
+			<div class="card">
+				<div class="mainContainer">
+					<div class="card-header center">
+						<h4 th:with="c = ${session.courseInfo}" 
+						th:text="|${c.courseYear}년도 ${c.courseSemester}학기 ${c.courseName} | + (${#strings.startsWith(courseExamList[0].examCode, 'M')} ? '중간고사' : '기말고사')"></h4>
+					</div>
+					<div class="card-body">
+						<div
+							th:each="i : ${#numbers.sequence(0, (#lists.size(courseExamList)/5) - 1)}"
+							th:id="|testPage-${i}|" class="questionContainer hidePage">
+							<th:block
+								th:each="idx : ${#numbers.sequence(0 + i * 5, 4 + i * 5)}">
+								<div th:with="r = ${courseExamList[idx]}"
+									th:data-q-num="${r.examQuestionNum}" class="exam card">
+									<p class="card-header"
+										th:text="|${idx + 1}. ${r.examQuestion.questionContent}
+								(${r.examQuestionPoint}점)|"></p>
+									<div class="testContainer card-body">
+										<th:block th:each="option : ${r.examQuestion.optionList}">
+											<div>
+												<input type="radio" th:name="${r.examQuestionNum}"
+													th:checked="${option.questionOptionNum == r.examQuestion.questionAnswer}"
+													th:text="| ${option.questionOptionContent}|" 
+													th:disabled="${command == 1}"/>
+											</div>
+										</th:block>
+									</div>
+								</div>
+							</th:block>
+							<div class="pageBtnContainer btnContainer">
+								<th:block th:if="${i} != 0">
+									<button type="button" th:data-idx="${i}" th:onclick="movePage"
+										class="prevBtn btn btn-primary btn-lg">
+										<i class="fa-solid fa-angle-left"></i>
+									</button>
+								</th:block>
+								<th:block th:if="${i != (#lists.size(courseExamList)/5 - 1)}">
+									<button type="button" th:data-idx="${i}" th:onclick="movePage"
+										class="nextBtn btn btn-primary btn-lg">
+										<i class="fa-solid fa-angle-right"></i>
+									</button>
+								</th:block>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script th:inline="javascript">
+			$(function() {
+				$("#testPage-0").removeClass("hidePage");
+				movePage();
+				finalSubmit();
+				modifyTest();
+				goBack();
+			})
+			
+			function finalSubmit() {
+				$("#testSubmitBtn").click(function() {
+					$.ajax({
+						method : 'POST',
+						url : `/professor/eclass/finalSubmit`,
+						data : {examCode : $("input[name=examCode]").val(), 
+										courseCode : $("input[name=courseCode]").val()}
+					})
+						.then(function(result) {
+							if (result == 'completed') {
+								fireSwal('success', '시험 제출이 완료되었습니다.')
+								.then(function(result) {
+									if (result.isConfirmed) {}
+									$("#cancelBtn").trigger("click");
+								})
+							}
+						})
+				})
+			}
+			
+			function modifyTest() {
+				$("#updateTestBtn").click(function() {
+					fireSwal('info', '변경 페이지로 이동합니다.')
+					.then(function(result) {
+						if (result.isConfirmed) {
+							location.href=`/professor/eclass/examInsert/` + $("input[name=examCode]").val();
+						}
+					})
+				})
+			}
+			
+		 function goBack() {
+			 $("#cancelBtn").click(function() {
+				 location.href=`/professor/eclass/examList`;
+			 })
+		 }
+		</script>
+	</th:block>
+</body>
+</html>

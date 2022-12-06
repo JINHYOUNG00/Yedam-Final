@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.project.portal.lecture.service.StudentLectureMapper">
+	
+	<select id="getLectureList" resultType="LectureVO">
+		SELECT *
+		FROM lecture
+		<where>
+		<if test="course != null and course != ''">
+		AND course_code = #{course.courseCode}
+		</if>
+		<if test="lecture != null and lecture != ''">
+		AND lecture_code = #{lecture.lectureCode}
+		</if>
+		</where>
+		ORDER BY week_code DESC
+	</select>
+	<resultMap id="lectureMap" type="LectureVO">
+		<id column="lecture_code" property="lectureCode"/>
+		<result column="video_code" property="videoCode"/>
+		<result column="lecture_title" property="lectureTitle"/>
+		<result column="lecture_youtube_path" property="lectureYoutubePath"/>
+		<result column="youtube_id" property="youtubeId"/>
+		<result column="week_code" property="weekCode"/>
+		<association property="lectureFile" javaType="VideoVO">
+			<result column="video_file_path" property="videoFilePath"/>
+			<result column="video_name" property="videoName"/>
+			<result column="video_play_time" property="videoPlayTime"/>
+			<result column="video_extension" property="videoExtension"/>
+			<result column="video_stored_name" property="videoStoredName"/>
+		</association>
+	</resultMap>
+	<select id="getLecture" resultMap="lectureMap">
+		SELECT 
+				L.LECTURE_CODE, 
+				L.LECTURE_TITLE,
+				L.LECTURE_YOUTUBE_PATH,
+				L.WEEK_CODE,
+				L.VIDEO_CODE, 
+				V.VIDEO_FILE_PATH,
+				V.VIDEO_NAME,
+				V.VIDEO_PLAY_TIME,
+				V.VIDEO_EXTENSION,
+				V.VIDEO_STORED_NAME
+		FROM LECTURE L LEFT OUTER JOIN VIDEO V
+		ON L.VIDEO_CODE = V.VIDEO_CODE
+		WHERE L.WEEK_CODE = #{weekCode}
+	</select>
+	<select id="getLectureRecord" resultType="StudentLectureVO">
+		SELECT *
+			FROM student_lecture
+			WHERE student_id = #{studentId}
+			AND lecture_code = #{lectureCode}
+	</select>
+	<insert id="insertLectureRecord" parameterType="StudentLectureVO">
+		INSERT INTO student_lecture (
+																watch_code,
+																watch_start_date,
+																watch_accum_time,
+																lecture_code,
+																student_id,
+																att_option	
+																)
+												VALUES (
+																'W'||#{studentId}||#{lectureCode},
+																SYSDATE,
+																#{watchAccumTime},
+																#{lectureCode},
+																#{studentId},
+																DEFAULT
+																)
+	</insert>
+	<update id="updateLectureRecord" statementType="CALLABLE">
+		<selectKey resultType="string" keyProperty="watchCode" order="BEFORE">
+			SELECT watch_code 
+				FROM student_lecture
+				WHERE student_id = #{studentId}
+				AND lecture_code = #{lectureCode}
+		</selectKey>
+		{
+			CALL SL_U_PRCD(#{watchCode}, #{lectureAttTime})
+		}
+	</update>
+	<insert id="insertStudentNote">
+		INSERT INTO student_note (
+															note_code,
+															note_content,
+															note_make,
+															lecture_code,
+															student_id,
+															note_time)
+							VALUES (
+											'N'||LPAD(TO_CHAR(note_seq.NEXTVAL), 14, '0'),
+											#{noteContent},
+											#{noteMake},
+											#{lectureCode},
+											#{studentId},
+											#{noteTime})
+		<selectKey resultType="String" keyProperty="noteCode" order="AFTER">
+			SELECT MAX(note_code)
+				FROM student_note
+				WHERE student_id = #{studentId}
+				AND lecture_code = #{lectureCode}
+		</selectKey>
+	</insert>
+	<select id="getNote" resultType="StudentNoteVO">
+		SELECT *
+			FROM student_note
+			WHERE note_code = #{noteCode}
+			AND student_id = #{studentId}
+	</select>
+	<select id="getNoteList" resultType="StudentNoteVO">
+		SELECT *
+			FROM student_note
+			WHERE student_id = #{studentId}
+			AND lecture_code = #{lecture.lectureCode}
+			ORDER BY 1
+	</select>
+	<insert id="insertLectureQuestion">
+		INSERT INTO lecture_question (
+																	lecture_question_num,
+																	week_code,
+																	lecture_question_title,
+																	lecture_question_content,
+																	lecture_question_reg_date,
+																	lecture_code,
+																	student_id
+																	)
+							VALUES (
+											'Q'||LPAD(TO_CHAR(question_seq.NEXTVAL), 9, '0'),
+											#{weekCode},
+											#{lectureQuestionTitle},
+											#{lectureQuestionContent},
+											SYSDATE,
+											#{lectureCode},
+											#{studentId}
+											)
+		<selectKey keyProperty="lectureQuestionNum" resultType="String" order="AFTER">
+			SELECT MAX(lecture_question_num)
+				FROM lecture_question
+				WHERE student_id = #{studentId}
+				AND lecture_code = #{lectureCode}
+		</selectKey>
+	</insert>
+	<select id="getQuestionList" resultType="LectureQuestionVO">
+		SELECT * FROM
+			lecture_question
+			WHERE student_id = #{studentId}
+			AND lecture_code = #{lecture.lectureCode}
+			ORDER BY 1
+	</select>
+	<select id="getQuestion" resultType="LectureQuestionVO">
+		SELECT *
+			FROM lecture_question
+			WHERE lecture_question_num = #{lectureQuestionNum}
+	</select>
+	<delete id="deleteStudentNote" parameterType="StudentNoteVO">
+		DELETE FROM student_note
+			WHERE note_code = #{noteCode}
+	</delete>
+</mapper>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/student-eclass_layout}">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<th:block layout:fragment="studentEclassContent">
+		<div id="main">
+			<div class="page-title">
+				<h3>나의 강의 노트</h3>
+			</div>
+			<div class="page-content">
+				<th:block th:if="${map.isEmpty()}">
+					<div class="card">
+						<div class="card-body content-no">
+							<h5>현재 강의에 작성된 노트가 없습니다.</h5>
+						</div>
+					</div>
+				</th:block>
+				<th:block th:unless="${map.isEmpty()}">
+					<div class="row">
+						<div class="col-10">
+							<th:block th:each="lecture, idx : ${lectureList}"
+								th:if="${map.containsKey(lecture.lectureCode)}">
+								<div th:id="|lecture-${idx.index}|" class="card">
+									<div class="card-header">
+										<i class="fa-solid fa-pencil inline"></i>
+										<h5 class="inline" th:text=" ${lecture.lectureTitle}"></h5>
+									</div>
+									<div class="card-body">
+										<th:block th:each="noteList : ${map.get(lecture.lectureCode)}">
+											<div class="card lectureNoteCard"
+												th:each="note : ${noteList}">
+												<div class="card-body">
+													<p align="right">
+													<button type="button"
+														class="btn btn-danger deleteBtn btn-sm"
+														th:id="${note.noteCode}">삭제</button>
+												</p>
+													<div th:utext="${note.noteContent}"></div>
+												</div>
+											</div>
+										</th:block>
+									</div>
+								</div>
+							</th:block>
+						</div>
+						<div class="col-2" id="bookmark">
+							<h6>
+								<i class="fa-solid fa-bookmark"></i> 강의 노트 목차
+							</h6>
+							<th:block th:each="lecture, idx : ${lectureList}"
+								th:if="${map.containsKey(lecture.lectureCode)}">
+								<div>
+									<a th:text="${lecture.lectureTitle}"
+										th:href="|#lecture-${idx.index}|"></a>
+								</div>
+							</th:block>
+						</div>
+					</div>
+				</th:block>
+			</div>
+		</div>
+		<script th:inline="javascript">
+			
+		$(function() {
+			deleteNote();
+		})
+		
+			function deleteNote() {
+				$(document).on("click", ".deleteBtn", function(e) {
+					let code = $(e.target).attr("id");
+					$.ajax({
+						method : 'DELETE',
+						url : `/student/eclass/deleteNote`,
+						data : JSON.stringify({noteCode : code}),
+						contentType : 'application/json',
+						success : function(result) {
+							if (result == 'success') {
+								fireSwal('success', '삭제를 완료하였습니다.')
+								.then((result) => {
+									if (result.isConfirmed) {
+										location.reload();
+									}
+								})
+							}
+						}
+					}) 
+				})
+			}
+		</script>
+	</th:block>
+</body>
+</html>

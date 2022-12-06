@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.project.portal.myquestion.service.myQuestionMapper">
+	
+	<select id="getStuMyQuestion" resultType="com.project.portal.myquestion.service.myQuestionVO">
+		    SELECT * FROM (
+    SELECT A.* , ROWNUM question_no
+        FROM (
+            SELECT Q.LECTURE_QUESTION_NUM,
+		       Q.LECTURE_QUESTION_TITLE,
+		       Q.LECTURE_QUESTION_REG_DATE,
+		       W.WEEK_NUM,
+		       nvl((SELECT 'O' FROM LECTURE_ANSWER A WHERE A.LECTURE_QUESTION_NUM=Q.LECTURE_QUESTION_NUM)    , 'X') lecture_Question_Answer_Check
+		FROM LECTURE_QUESTION Q
+		JOIN COURSE_WEEKLY W ON Q.WEEK_CODE = W.WEEK_CODE
+				
+		WHERE Q.STUDENT_ID = #{myQuestion.studentId} AND w.course_code = #{myQuestion.courseCode}
+		<if test="cri.type != null and cri.type !=''">
+				AND W.WEEK_NUM = #{cri.type} 
+		</if>
+		ORDER BY 3 ASC ) A
+		
+		  where <![CDATA[ROWNUM <= #{cri.pageNum} * #{cri.amount}]]>
+		  )
+       	WHERE question_no > (#{cri.pageNum} - 1) * #{cri.amount}
+		
+	</select>
+	
+	<select id="getStuTotal" resultType="integer">
+		SELECT count(*) AS total
+		FROM LECTURE_QUESTION Q
+		JOIN COURSE_WEEKLY W ON Q.WEEK_CODE = W.WEEK_CODE
+		WHERE Q.STUDENT_ID = #{myQuestion.studentId} AND w.course_code = #{myQuestion.courseCode}
+		  <if test="type != null and type !=''">
+				AND W.WEEK_NUM = #{type} 
+		</if>
+	</select>
+	
+	
+	
+	<select id="getStuMyQuestionDetail" resultType="com.project.portal.myquestion.service.myQuestionVO">
+		SELECT Q.LECTURE_QUESTION_TITLE,
+			   W.WEEK_NUM,
+			   Q.LECTURE_QUESTION_CONTENT,
+			   A.LECTURE_ANSWER_REG_DATE,
+			   A.LECTURE_ANSWER_CONTENT,
+			   Q.LECTURE_QUESTION_NUM,
+			   Q.LECTURE_QUESTION_REG_DATE
+        FROM LECTURE_QUESTION Q JOIN LECTURE_ANSWER A
+          ON Q.LECTURE_QUESTION_NUM = A.LECTURE_QUESTION_NUM
+        JOIN COURSE_WEEKLY W
+          ON Q.WEEK_CODE = W.WEEK_CODE
+        WHERE Q.LECTURE_QUESTION_NUM = #{lectureQuestionNum}
+	
+	
+	</select>
+	
+	<select id="getStuMyQuestionAnsCheck" resultType="com.project.portal.myquestion.service.myQuestionVO">
+		SELECT Q.LECTURE_QUESTION_NUM,
+		       A.LECTURE_ANSWER_REG_DATE
+		FROM LECTURE_QUESTION
+		       Q JOIN LECTURE_ANSWER A ON Q.LECTURE_QUESTION_NUM = A.LECTURE_QUESTION_NUM
+		WHERE Q.STUDENT_ID = #{studentId}
+		ORDER BY 1 ASC
+	
+	</select>
+	
+	<select id="getProfMyQuestion" resultType="com.project.portal.myquestion.service.myQuestionVO">
+		SELECT * FROM (
+      SELECT A.*, ROWNUM question_no
+        FROM ( 
+       SELECT
+               L.LECTURE_QUESTION_NUM,
+		       L.LECTURE_QUESTION_TITLE,
+		       S.STUDENT_NAME,
+		       W.COURSE_CODE,
+		       W.WEEK_NUM,
+		       nvl((SELECT 'O' FROM LECTURE_ANSWER A WHERE A.LECTURE_QUESTION_NUM=L.LECTURE_QUESTION_NUM), 'X') lecture_Question_Answer_Check,
+		       L.LECTURE_QUESTION_REG_DATE
+		FROM LECTURE_QUESTION L 
+		  JOIN STUDENT_PRI_INFO S
+		    ON L.STUDENT_ID = S.STUDENT_ID
+          JOIN COURSE_WEEKLY W 
+            ON L.WEEK_CODE = W.WEEK_CODE
+       WHERE W.COURSE_CODE = #{myQuestion.courseCode}
+        <if test="cri.type != null and cri.type !=''">
+				AND W.WEEK_NUM = #{cri.type} 
+		</if>
+       ORDER BY 7 ASC) A
+       
+       where <![CDATA[ROWNUM <= #{cri.pageNum} * #{cri.amount}]]>)
+       	WHERE question_no > (#{cri.pageNum} - 1) * #{cri.amount}
+		
+		
+	</select>
+	
+	<select id="getProfTotal" resultType="integer">
+		SELECT count(*) AS total
+		FROM LECTURE_QUESTION L 
+		  JOIN STUDENT_PRI_INFO S
+		    ON L.STUDENT_ID = S.STUDENT_ID
+          JOIN COURSE_WEEKLY W 
+            ON L.WEEK_CODE = W.WEEK_CODE
+       WHERE W.COURSE_CODE = #{courseCode}
+       <if test="type != null and type !=''">
+				AND W.WEEK_NUM = #{type} 
+		</if>
+	</select>
+	
+	<select id="getProfMyQuestionDetail" resultType="com.project.portal.myquestion.service.myQuestionVO">
+		SELECT Q.LECTURE_QUESTION_TITLE,
+		       W.WEEK_CODE,
+		       W.WEEK_NUM,
+		       Q.LECTURE_QUESTION_CONTENT,
+		       Q.LECTURE_QUESTION_REG_DATE,
+		       Q.LECTURE_QUESTION_NUM,
+		       A.LECTURE_ANSWER_CONTENT
+          FROM LECTURE_QUESTION Q JOIN COURSE_WEEKLY W
+            ON Q.WEEK_CODE = W.WEEK_CODE
+          LEFT OUTER JOIN LECTURE_ANSWER A 
+            ON Q.LECTURE_QUESTION_NUM = A.LECTURE_QUESTION_NUM
+         WHERE Q.LECTURE_QUESTION_NUM = #{lectureQuestionNum}
+	</select>
+	
+	<insert id="insertProfMyQuestion" parameterType="myQuestionAnswerVO">
+		INSERT INTO LECTURE_ANSWER ( lecture_answer_num,
+									lecture_question_num,
+									lecture_answer_content,
+									lecture_answer_reg_date,
+									lecture_answer_mod_date
+									)
+									VALUES (
+										LECTURE_ANSWER_SEQ.nextval,
+										#{lectureQuestionNum},
+										#{lectureAnswerContent},
+										SYSDATE,
+										null)				
+	</insert>
+	
+	<update id="modifyProfMyQuestion" parameterType="myQuestionAnswerVO">
+		UPDATE
+		LECTURE_ANSWER
+		SET LECTURE_ANSWER_CONTENT = #{lectureAnswerContent}
+		WHERE
+		LECTURE_QUESTION_NUM = #{lectureQuestionNum}
+	</update>
+</mapper>

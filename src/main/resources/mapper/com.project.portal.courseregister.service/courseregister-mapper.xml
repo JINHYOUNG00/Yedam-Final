@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.project.portal.courseregister.service.RegisterMapper">
+
+	<select id="registerList"
+		resultType="com.project.portal.courseregister.service.RegisterVO">
+		SELECT a.course_name,
+		       a.course_sortation,
+		       a.course_credit, 
+		       a.course_limit,
+		       a.course_year,
+		       a.course_semester,
+               a.course_code,
+		        
+               COUNT(b.student_id) AS student_count,
+               
+               c.professor_name
+               
+		  FROM course a
+		  LEFT OUTER JOIN my_course b
+		  	ON a.course_code = b.course_code
+          JOIN professor c
+            ON a.professor_id = c.professor_id
+            <if test="departCode != null and departCode !=''">
+				AND a.depart_code = #{departCode}
+			</if>
+		GROUP BY a.course_code, 
+				 a.course_name, 
+				 a.course_sortation, 
+				 a.course_credit, 
+				 a.course_limit, 
+				 a.course_year, 
+				 a.course_semester, 
+                 a.course_code,
+                
+        		 c.professor_name
+        HAVING a.course_year = #{courseYear}
+            AND a.course_semester = #{courseSemester} 
+            AND a.course_code not in (select course_code 
+            							from my_course 
+            						   where student_id = #{studentId})
+		ORDER BY course_name ASC
+	</select>
+
+	<select id="studentInfo"
+		resultType="com.project.portal.courseregister.service.RegisterVO">
+		SELECT a.student_id, 
+			   a.student_grade,
+			   a.department_code, 
+			   
+			   b.student_name, 
+			   
+			   c.college_code, 
+			   c.depart_name,
+			   
+			   d.college_name
+		  FROM STUDENT_STUDY_INFO a
+		  JOIN STUDENT_PRI_INFO b
+				ON a.student_id = b.student_id
+		  JOIN DEPARTMENT c
+				ON a.department_code = c.depart_code
+		  JOIN college d
+				ON c.college_code = d.college_code
+		 WHERE a.student_id = #{studentId}
+	</select>
+	
+	<select id="packageNList" resultType="com.project.portal.courseregister.service.RegisterVO">
+		SELECT a.course_code, 
+			   a.package_yn,
+			   a.student_id,
+			   
+			   b.course_sortation, 
+			   b.course_name, 
+			   b.course_credit, 
+			   b.professor_id, 
+			   b.course_limit,
+			   b.course_year, 
+			   
+			   c.professor_name 
+			FROM course_package a
+			JOIN course b
+				ON a.course_code = b.course_code
+			JOIN professor c
+				ON b.professor_id = c.professor_id
+		  WHERE a.package_yn = 'S01' AND a.student_id = #{studentId}
+	</select>
+	
+	<select id="successList" resultType="com.project.portal.courseregister.service.RegisterVO">
+		SELECT a.course_sortation, 
+			   a.course_year, 
+               a.course_name, 
+               a.course_credit,
+               a.course_semester,
+               a.course_limit, 
+               
+               b.student_id, 
+               b.course_code,
+               COUNT(b.student_id) AS student_count,  
+       	       
+       	       c.professor_name
+       	       
+			FROM course a
+			LEFT OUTER 	JOIN my_course b
+					ON a.course_code = b.course_code
+				JOIN professor c
+					ON a.professor_id = c.professor_id	
+			GROUP BY  
+				 a.course_sortation, 
+			   a.course_year, 
+               a.course_name, 
+               a.course_credit,
+               a.course_semester,
+               a.course_limit,  
+               
+               b.student_id, 
+               b.course_code,  
+                
+        	   c.professor_name
+        	   
+        HAVING b.student_id = #{studentId} 
+			AND a.course_semester = #{courseSemester}
+			AND a.course_year = #{courseYear}		
+		 
+	</select>
+	
+	<select id="limitCount" resultType="com.project.portal.courseregister.service.RegisterVO">
+		SELECT a.course_sortation, 
+			   a.course_year, 
+               a.course_name, 
+               a.course_credit,
+               a.course_semester, 
+               a.course_code,
+               a.course_limit,
+               
+       	       c.professor_name
+			FROM course a
+				LEFT OUTER JOIN my_course b
+					ON a.course_code = b.course_code
+				JOIN professor c
+					ON a.professor_id = c.professor_id
+		WHERE a.course_code = #{courseCode}
+			AND a.course_semester = #{courseSemester}
+			AND a.course_year = #{courseYear}
+			AND b.student_id = #{studentId}
+	</select>
+	
+	<insert id="registerInsert" parameterType="com.project.portal.courseregister.service.RegisterVO">
+		INSERT INTO my_course
+				(
+					COURSE_REG_CODE,
+					APPLY_DATE,
+					COURSE_CODE,
+					COURSE_REVIEW_YN,
+					STUDENT_ID
+				)
+		VALUES	(
+					to_char(SYSDATE, 'YY') ||'0'|| #{courseSemester} || SUBSTR(#{courseCode}, 3,2)||LPAD(TO_CHAR(reg_seq.NEXTVAL), 10, '0'),
+					SYSDATE,
+					#{courseCode},
+					'UNSUB',
+					#{studentId}
+				)		
+	</insert>
+	
+	<delete id="registerDelete" parameterType="com.project.portal.courseregister.service.RegisterVO">
+		DELETE FROM my_course
+		WHERE course_code = #{courseCode} AND student_id = #{studentId}
+	</delete>
+	
+	<select id="courseCheck" resultType="com.project.portal.courseregister.service.RegisterVO">
+		SELECT course_name
+			FROM course a
+				JOIN my_course b
+					ON a.course_code = b.course_code
+		WHERE student_id = #{studentId} AND a.course_name LIKE '%'||#{courseName}||'%'
+	</select>
+	
+	<select id="registerAllCredit" resultType="com.project.portal.courseregister.service.RegisterVO">
+		SELECT 
+			SUM(b.course_credit) reg_credit
+		FROM my_course a
+			JOIN course b
+				ON a.course_code = b.course_code
+		WHERE student_id = #{studentId} 
+	</select>
+	
+</mapper>

@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper
+	namespace="com.project.portal.mycourse.service.MyCourseMapper">
+
+	<select id="getstuMyCourse"
+		resultType="MyCourseVO">
+		SELECT C.COURSE_NAME,
+		       P.PROFESSOR_NAME,
+		       C.COURSE_CODE
+		FROM MY_COURSE M
+		JOIN COURSE C ON M.COURSE_CODE = C.COURSE_CODE
+		JOIN PROFESSOR P ON P.PROFESSOR_ID = C.PROFESSOR_ID
+		WHERE M.STUDENT_ID = #{my.studentId}
+		<if test="course.searchYear == '' or course.searchYear == null or course.searchSemester == '' or course.searchSemester == null">
+		AND C.COURSE_YEAR = #{course.courseYear} AND C.COURSE_SEMESTER = #{course.courseSemester}
+		</if>
+		<if test="course.searchYear != '' and course.searchYear != null or course.searchSemester != '' and course.searchSemester != null">
+		AND C.COURSE_YEAR = #{course.searchYear} AND C.COURSE_SEMESTER = #{course.searchSemester}
+		</if>
+	</select>
+
+	<select id="getstuMyCourseDetail"
+		resultType="myCourseDetailVO">
+		SELECT C.COURSE_NAME,
+		C.COURSE_SORTATION,
+		C.COURSE_CODE,
+		D.DEPART_NAME,
+		P.PROFESSOR_NAME,
+		C.COURSE_CREDIT,
+		P.PROFESSOR_EMAIL,
+		C.COURSE_SUMMARY
+		FROM COURSE C
+		JOIN PROFESSOR P ON P.PROFESSOR_ID = C.PROFESSOR_ID
+		JOIN DEPARTMENT D ON
+		D.DEPART_CODE = P.DEPART_CODE
+		WHERE C.COURSE_CODE = #{courseCode}
+	</select>
+
+	<select id="getstuMyCourseWeekDetail"
+		resultType="myCourseDetailVO">
+		SELECT WEEK_NUM,
+		WEEK_CONTENT
+		FROM COURSE_WEEKLY
+		WHERE COURSE_CODE = #{courseCode}
+		ORDER BY 1 ASC
+	</select>
+
+	<select id="getProfMyCourse"
+		resultType="myProfCourseVO">
+		SELECT P.PROFESSOR_NAME,
+		C.COURSE_NAME,
+		C.COURSE_CODE
+		FROM PROFESSOR P JOIN COURSE C
+		ON P.PROFESSOR_ID = C.PROFESSOR_ID
+		WHERE P.PROFESSOR_ID = #{professorId}
+		<if test="searchYear == '' or searchYear == null or searchSemester == '' or searchSemester == null">
+				AND COURSE_SEMESTER = #{courseSemester}	AND COURSE_YEAR = #{courseYear}
+		</if>
+		
+		<if test="searchYear != '' and searchYear != null or searchSemester != '' and searchSemester != null">
+				AND COURSE_SEMESTER = #{searchSemester}	AND COURSE_YEAR = #{searchYear}
+		</if>
+
+	</select>
+	
+	<select id="studentStudyList"
+		resultType="MyCourseVO">
+		SELECT *
+		FROM S_G_VU
+		WHERE STUDENT_ID = #{studentId}
+	</select>
+	
+	<select id="studentCreditSum"
+		resultType="MyCourseVO">
+		SELECT TRUNC(SUM(CASE WHEN COURSE_GRADE IS NULL THEN 0 ELSE SEMESTER_CREDIT2 END),0) AS "CREDIT_SUM",
+				TRUNC(NVL(SUM(CREDIT_SUM)/DECODE(SUM(CASE WHEN COURSE_GRADE IS NULL THEN 0 ELSE SEMESTER_CREDIT2 END),0,NULL,SUM(CASE WHEN COURSE_GRADE IS NULL THEN 0 ELSE SEMESTER_CREDIT2 END)),0),2) AS "GRADE_AVG"
+		FROM SEMESTER_CREDITSUM_VU
+		WHERE STUDENT_ID = #{studentId}
+	</select>
+	
+	<select id="studentSortationCredit"
+		resultType="MyCourseVO">
+		SELECT COURSE_SORTATION, 
+			   A.COURSE_SORTATION_CREDIT
+		FROM S_G_VU V
+		JOIN (SELECT  STUDENT_ID, 
+					  COURSE_SORTATION, 
+					  SUM(SORTATION_CREDIT_SUM) AS "COURSE_SORTATION_CREDIT"
+		      FROM SORT_COURSE_SUM_VU
+		      GROUP BY COURSE_SORTATION, STUDENT_ID) A
+		ON V.STUDENT_ID = A.STUDENT_ID
+		WHERE V.STUDENT_ID = #{studentId}
+		GROUP BY COURSE_SORTATION,COURSE_SORTATION_CREDIT
+		ORDER BY COURSE_SORTATION DESC
+	</select>
+	
+	<select id="getTotal" resultType="int">
+		SELECT COUNT(*)
+		FROM (
+				SELECT * 
+				FROM (
+			    	SELECT ROWNUM R,
+			                STUDENT_ID, 
+			                COURSE_YEAR, 
+			                COURSE_NAME, 
+			                COURSE_SEMESTER, 
+			                COURSE_SORTATION,
+			                COURSE_SORTATION_NM, 
+			                COURSE_CREDIT, 
+			                COURSE_GRADE,
+			                COURSE_GRADE_NM,
+			                COURSE_REVIEW_YN
+				    FROM(
+				            SELECT M.STUDENT_ID, 
+				                        C.COURSE_YEAR,
+				                        C.COURSE_NAME, 
+				                        C.COURSE_SEMESTER, 
+				                        C.COURSE_SORTATION,
+				                        FIND_CODE(COURSE_SORTATION) COURSE_SORTATION_NM, 
+				                        C.COURSE_CREDIT, 
+				                        M.COURSE_GRADE,
+				                        FIND_GRADE(COURSE_GRADE) COURSE_GRADE_NM,
+				                        M.COURSE_REVIEW_YN
+				            FROM MY_COURSE M
+				            JOIN COURSE C
+				            ON C.COURSE_CODE = M.COURSE_CODE
+		<where>
+				 STUDENT_ID = #{studentId}
+			<if test="keyword == '' or keyword == null or type == '' or type == null">
+				AND COURSE_SEMESTER = #{courseSemester}	AND COURSE_YEAR = #{courseYear}
+			</if>
+			<if test="keyword != '' and keyword != null or type != '' and type != null">
+				<if test="keyword == ''and type != ''">
+					AND COURSE_SEMESTER = #{keyword}	OR COURSE_YEAR = #{type}
+				</if>
+				<if test="keyword != '' and type == ''">
+					AND COURSE_SEMESTER = #{keyword}	OR COURSE_YEAR = #{type}
+				</if>
+				<if test="keyword != '' and type != ''">
+					AND COURSE_SEMESTER = #{keyword}	AND COURSE_YEAR = #{type}
+				</if>
+			</if>
+		</where>
+		ORDER BY COURSE_YEAR DESC, COURSE_SEMESTER DESC
+		)
+	)
+		
+		)
+	</select>
+	
+	<select id="semesterGradeSelect" resultType="MyCourseVO">
+		SELECT * 
+		FROM (
+		    SELECT ROWNUM R,
+		                STUDENT_ID, 
+		                COURSE_YEAR, 
+		                COURSE_NAME, 
+		                COURSE_SEMESTER, 
+		                COURSE_SORTATION,
+		                COURSE_SORTATION_NM, 
+		                COURSE_CREDIT, 
+		                COURSE_GRADE,
+		                COURSE_GRADE_NM,
+		                COURSE_REVIEW_YN
+		    FROM(
+		            SELECT M.STUDENT_ID, 
+		                        C.COURSE_YEAR,
+		                        C.COURSE_NAME, 
+		                        C.COURSE_SEMESTER, 
+		                        C.COURSE_SORTATION,
+		                        FIND_CODE(COURSE_SORTATION) COURSE_SORTATION_NM, 
+		                        C.COURSE_CREDIT, 
+		                        M.COURSE_GRADE,
+		                        FIND_GRADE(COURSE_GRADE) COURSE_GRADE_NM,
+		                        M.COURSE_REVIEW_YN
+		            FROM MY_COURSE M
+		            JOIN COURSE C
+		            ON C.COURSE_CODE = M.COURSE_CODE
+		<where>
+				 STUDENT_ID = #{studentId}
+			<if test="keyword == '' or keyword == null or type == '' or type == null">
+				AND COURSE_SEMESTER = #{courseSemester}	AND COURSE_YEAR = #{courseYear}
+			</if>
+			<if test="keyword != '' and keyword != null or type != '' and type != null">
+				<if test="keyword == ''and type != ''">
+					AND COURSE_SEMESTER = #{keyword}	OR COURSE_YEAR = #{type}
+				</if>
+				<if test="keyword != '' and type == ''">
+					AND COURSE_SEMESTER = #{keyword}	OR COURSE_YEAR = #{type}
+				</if>
+				<if test="keyword != '' and type != ''">
+					AND COURSE_SEMESTER = #{keyword}	AND COURSE_YEAR = #{type}
+				</if>
+			</if>
+		</where>
+		ORDER BY COURSE_YEAR DESC, COURSE_SEMESTER DESC
+		)
+	)
+	</select>
+	<select id="getStudentList" resultType="ExamScoreVO">
+		SELECT student_id, course_code
+			FROM my_course
+			WHERE course_code = #{courseCode}
+	</select>
+	<select id="getWeekCode" resultType="CourseVO">
+		SELECT week_code, course_code
+			FROM course_weekly
+			WHERE SYSDATE between
+				week_start_date AND week_end_date
+			AND course_code = #{courseCode}
+	</select>
+	<select id="getLectureList" resultType="LectureVO">
+		SELECT 
+			lecture_code,
+			week_code,
+			lecture_start_date,
+			lecture_end_date,
+			lecture_title,
+			course_code
+			FROM lecture
+			WHERE course_code = #{courseCode}
+			AND week_code = #{weekCode}
+	</select>
+	<select id="getReportList" resultType="ReportVO">
+		SELECT 
+			report_code,
+			week_code,
+			report_start_date,
+			report_end_date,
+			report_title,
+			course_code
+			FROM report_info
+			WHERE course_code = #{courseCode}
+			AND week_code = #{weekCode}
+	</select>
+	<select id="getExamList" resultType="ExamVO">
+		SELECT
+			exam_code,
+			week_code,
+			exam_start_date,
+			exam_end_date,
+			exam_total_question,
+			exam_total_score,
+			course_code
+			FROM exam
+			WHERE course_code = #{courseCode}
+			AND week_code = #{weekCode}
+	</select>
+	
+	<select id="getCourseName" resultType="String">
+		select course_name from course
+		where course_code = #{courseCode}
+	</select>
+	
+	
+	<select id="getStudyNoticeList" resultType="StudyNoticeVO">
+		 select *
+            from (
+            select  A.* , rownum r
+            from (
+            select 
+            TO_NUMBER(COURSE_NOTICE_NO) AS course_notice_no, course_notice_title, course_notice_reg_date
+            from course_notice
+            where course_code = #{courseCode}
+            order by 1 desc) A
+            )
+            where r between 1 and 10
+	</select>
+	
+	<select id="getProfMyCourseYear" resultType="myProfCourseVO">
+		select distinct course_year from course
+ 		where professor_id = #{value}
+	</select>
+	
+	<select id="getProfMyCourseSemester" resultType="myProfCourseVO">
+		select distinct course_semester from course
+ 		where professor_id = #{value}
+	</select>
+	
+	<select id="getStuCourseYear" resultType="MyCourseVO">
+	select distinct c.course_year
+		from my_course m join course c
+		on m.course_code = c.course_code
+ 		where m.student_id = #{value}
+	</select>
+	<select id="getStuCourseSemester" resultType="MyCourseVO">
+	        select distinct c.course_semester
+			from my_course m join course c
+			on m.course_code = c.course_code
+ 			where m.student_id = #{value}
+	</select>
+</mapper>

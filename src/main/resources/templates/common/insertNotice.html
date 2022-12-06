@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{layout/admin_layout}">
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<th:block layout:fragment="adminContent">
+		<div id="main">
+			<div class="page-title">
+				<h3>학사 공지사항 등록</h3>
+			</div>
+			<div class="card">
+				<div class="card-body">
+					<form id="form" th:action="@{/admin/insertNotice}" method="POST" enctype="multipart/form-data">
+						<div>
+							<label>공지사항 제목</label> <input class="form-control" type="text"
+								name="noticeTitle">
+						</div>
+						<div>
+							<label>공지사항 공개 여부</label> <select class="form-select"
+								name="noticePrivate">
+								<th:block th:each="open : ${codeMap.get('O01')}" th:object="${open}">
+								<option th:value="*{detailCode}" th:text="*{detailName}"></option>
+								</th:block>
+							</select>
+						</div>
+						<div>
+							<label>공지사항 공개 범위</label> <select class="form-select"
+								name="noticeDivision">
+								<th:block th:each="sort : ${codeMap.get('S01')}" th:object="${sort}">
+								<option th:value="*{detailCode}" th:text="*{detailName}"></option>
+								</th:block>
+							</select>
+						</div>
+						<div>
+							<label>파일</label> <input type="file" name="file"
+								class="form-control">
+						</div>
+						<div>
+							<label>공지사항 내용</label>
+							<textarea id="noticeContent" name="noticeContent"></textarea>
+						</div>
+						<div class="btnContainer">
+							<button type="button" th:onclick="confirm()" class="btn btn-primary btn-md">등록하기</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+		<script th:inline="javascript">
+			$(function() {
+				initiateEditor('noticeContent');
+			})
+			
+			function confirm() {
+				fireSwal('info', '공지사항을 등록하시겠습니까?')
+					.then((result) => {
+						if (result.isConfirmed) {
+							$("#form").submit();
+						}
+					})
+			}
+			
+		</script>
+	</th:block>
+</body>
+</html>
